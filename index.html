@@ -1,0 +1,2052 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Турник дома</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2f5d7c">
+<meta name="description" content="Трекер домашних тренировок на турнике для Фёдора и Оли">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" type="image/png" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=Unbounded:wght@600;700&display=swap" media="print" onload="this.media='all'">
+<style>
+/* Одна колонка «как планшетка у турника»: шапка с человеком и номером тренировки, ниже упражнения по порядку */
+:root {
+  --bg: #f3f5f6; --surface: #ffffff; --fg: #1d2529; --muted: #5f6b72; --line: #d9dfe2;
+  --steel: #2f5d7c; --steel-ink: #ffffff; --steel-soft: #e3edf3;
+  --done: #2f7d55; --done-soft: #e5f3eb;
+  --easy: #2f7d55; --ok: #2f5d7c; --hard: #b26a00; --pain: #b3261e; --pain-soft: #fbe9e7;
+  --display: "Unbounded", "Golos Text", system-ui, sans-serif;
+  --body: "Golos Text", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12181b; --surface: #1b2328; --fg: #e6ecef; --muted: #98a6ad; --line: #2c373d;
+  --steel: #7fb2d4; --steel-ink: #0e1a22; --steel-soft: #1f3341;
+  --done: #6cc596; --done-soft: #17302a;
+  --easy: #6cc596; --ok: #7fb2d4; --hard: #e3a649; --pain: #f08a80; --pain-soft: #3a1f1d;
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #12181b; --surface: #1b2328; --fg: #e6ecef; --muted: #98a6ad; --line: #2c373d;
+  --steel: #7fb2d4; --steel-ink: #0e1a22; --steel-soft: #1f3341;
+  --done: #6cc596; --done-soft: #17302a;
+  --easy: #6cc596; --ok: #7fb2d4; --hard: #e3a649; --pain: #f08a80; --pain-soft: #3a1f1d;
+  color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 16px; line-height: 1.45; }
+.wrap { max-width: 560px; margin: 0 auto; padding-block: 12px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 14px; }
+.people { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+.people button { font: 600 16px var(--body); padding: 10px; border: 0; border-radius: 9px; background: transparent; color: var(--muted); cursor: pointer; }
+.people button[aria-pressed="true"] { background: var(--steel); color: var(--steel-ink); }
+.head h1 { font: 700 22px/1.2 var(--display); margin: 4px 0 2px; text-wrap: balance; letter-spacing: -0.01em; }
+.head .sub { color: var(--muted); font-size: 14px; }
+.dots { display: flex; gap: 6px; margin-top: 8px; }
+.dot { flex: 1; height: 6px; border-radius: 3px; background: var(--line); }
+.dot.closed { background: var(--done); }
+.dot.now { background: var(--steel); }
+.list { display: flex; flex-direction: column; gap: 8px; }
+.ex { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+.ex-row { width: 100%; display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 12px 14px; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.ex-row .name { font-weight: 600; min-width: 0; }
+.ex-row .plan { color: var(--muted); font-size: 14px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ex.done { background: var(--done-soft); border-color: transparent; }
+.ex.done .name::before { content: "✓ "; color: var(--done); }
+.ex.done .plan { color: var(--done); }
+.ex.open { border: 2px solid var(--steel); }
+.ex.open:not(.done) .ex-row .plan { visibility: hidden; }
+.timer { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; background: var(--steel-soft); }
+.tval { font: 700 34px/1 var(--display); font-variant-numeric: tabular-nums; min-width: 2.2ch; }
+.timer.reached .tval { color: var(--done); }
+.tgoal { flex: 1; color: var(--muted); font-size: 14px; }
+.tbtn { font: 700 16px var(--body); padding: 12px 16px; border: 0; border-radius: 10px; background: var(--steel); color: var(--steel-ink); cursor: pointer; }
+.timer.run .tbtn { background: var(--hard); color: var(--surface); }
+[hidden] { display: none !important; }
+.body { padding: 0 14px 14px; display: flex; flex-direction: column; gap: 12px; }
+.big { font: 700 26px/1.1 var(--display); font-variant-numeric: tabular-nums; }
+details { color: var(--muted); font-size: 15px; }
+details summary { cursor: pointer; color: var(--steel); font-weight: 500; }
+details p { margin: 6px 0 0; color: var(--fg); }
+.lbl { font-size: 13px; color: var(--muted); letter-spacing: 0.03em; text-transform: uppercase; }
+.field { display: flex; flex-direction: column; gap: 4px; }
+input[type="text"] { font: 500 18px var(--body); padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--fg); font-variant-numeric: tabular-nums; }
+input[type="text"]:focus-visible, button:focus-visible { outline: 2px solid var(--steel); outline-offset: 2px; }
+.hint { font-size: 13px; color: var(--muted); }
+.feels { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.feels button { font: 600 14px var(--body); padding: 10px 2px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); cursor: pointer; }
+.feels button[aria-pressed="true"][data-feel="easy"] { background: var(--easy); border-color: var(--easy); color: var(--surface); }
+.feels button[aria-pressed="true"][data-feel="ok"] { background: var(--ok); border-color: var(--ok); color: var(--surface); }
+.feels button[aria-pressed="true"][data-feel="hard"] { background: var(--hard); border-color: var(--hard); color: var(--surface); }
+.feels button[aria-pressed="true"][data-feel="pain"] { background: var(--pain); border-color: var(--pain); color: var(--surface); }
+.save { font: 700 17px var(--body); padding: 14px; border: 0; border-radius: 12px; background: var(--steel); color: var(--steel-ink); cursor: pointer; }
+.save:disabled { opacity: 0.45; cursor: default; }
+.prev { font-size: 15px; color: var(--muted); margin-top: -6px; }
+.prev b { color: var(--fg); font-weight: 600; font-variant-numeric: tabular-nums; }
+.err { color: var(--pain); background: var(--pain-soft); padding: 8px 10px; border-radius: 8px; font-size: 14px; }
+.note { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.note h2 { font: 700 18px/1.25 var(--display); margin: 0; }
+.note p { margin: 0; color: var(--muted); }
+select { font: 500 17px var(--body); padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--fg); }
+.check { display: flex; gap: 9px; align-items: flex-start; font-size: 15px; }
+.check input { margin-top: 4px; }
+.decision { border-top: 1px solid var(--line); padding-top: 12px; display: flex; flex-direction: column; gap: 5px; }
+.decision-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.tag { flex: none; border-radius: 7px; padding: 2px 7px; font-size: 12px; font-weight: 600; background: var(--steel-soft); color: var(--steel-ink); }
+.tag.same { color: var(--muted); background: var(--bg); }
+.tag.increase { color: var(--done); background: var(--done-soft); }
+.tag.decrease, .tag.remove { color: var(--pain); background: var(--pain-soft); }
+.decision .reason { font-size: 14px; color: var(--fg); }
+.backup { display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
+.backup button { font: 500 14px var(--body); padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--muted); cursor: pointer; }
+.backup .hint { flex-basis: 100%; text-align: center; }
+@media (prefers-reduced-motion: no-preference) { .ex { transition: background .2s, border-color .2s; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="people" role="group" aria-label="Кто тренируется">
+    <button type="button" id="p-fedor" data-person="fedor" aria-pressed="true">Фёдор</button>
+    <button type="button" id="p-olya" data-person="olya" aria-pressed="false">Оля</button>
+  </div>
+  <div class="head" id="head">
+    <h1>Загружаю программу…</h1>
+    <div class="sub">Здесь появится следующая тренировка блока и её упражнения по порядку.</div>
+  </div>
+  <div id="main" class="list"></div>
+  <div class="backup" id="backup">
+    <button type="button" id="export-btn">Сохранить копию</button>
+    <button type="button" id="import-btn">Загрузить копию</button>
+    <input type="file" id="import-file" accept="application/json,.json" hidden>
+    <div class="hint" id="backup-hint"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  function saveRawBackup() {
+    try {
+      const state = JSON.parse(localStorage.getItem('workout.db.v1') || '{}');
+      const docs = Object.keys(state).filter(path => path.startsWith('people/')).sort().map(path => ({ path, data: state[path] }));
+      if (!docs.length) { alert('Записи в этом браузере не найдены.'); return; }
+      const payload = JSON.stringify({ app: 'workout', version: 1, exportedAt: new Date().toISOString(), docs }, null, 1);
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([payload], { type: 'application/json' }));
+      a.download = `workout-копия-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a); a.click(); a.remove();
+      localStorage.setItem('workout.backupAt', new Date().toISOString());
+    } catch { alert('Не получилось сохранить копию. Напиши ассистенту.'); }
+  }
+
+  function showLoadingProblem(event) {
+    const heading = document.querySelector('#head h1');
+    if (!heading || heading.textContent !== 'Загружаю программу…') return;
+    heading.textContent = 'Не получилось открыть программу';
+    const main = document.getElementById('main');
+    main.innerHTML = '<div class="note"><p>Записи остались в браузере. Закрой приложение полностью и открой его ещё раз. Если это не поможет, нажми «Сохранить копию» ниже и напиши ассистенту.</p><button type="button" class="save" id="retry-load">Попробовать ещё раз</button></div>';
+    document.getElementById('retry-load').addEventListener('click', () => location.reload());
+    const oldExport = document.getElementById('export-btn');
+    const rawExport = oldExport.cloneNode(true);
+    oldExport.replaceWith(rawExport);
+    rawExport.addEventListener('click', saveRawBackup);
+    const details = document.createElement('details');
+    const summary = document.createElement('summary');
+    summary.textContent = 'Техническая деталь для ассистента';
+    const text = document.createElement('p');
+    const message = event?.error?.stack || event?.reason?.stack || event?.message || event?.reason || 'Текст ошибки не получен.';
+    text.textContent = String(message) + '\nЭтап: ' + (document.body.dataset.boot || 'начало страницы');
+    text.style.whiteSpace = 'pre-wrap';
+    text.style.overflowWrap = 'anywhere';
+    details.append(summary, text);
+    main.firstChild.append(details);
+  }
+  window.addEventListener('error', e => { if (e.message) showLoadingProblem(e); });
+  window.addEventListener('unhandledrejection', showLoadingProblem);
+  setTimeout(showLoadingProblem, 12000);
+
+  document.body.dataset.boot = 'стартовая страница';
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || ['localhost', '127.0.0.1'].includes(location.hostname))) {
+    const wasControlled = Boolean(navigator.serviceWorker.controller);
+    let reloading = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!wasControlled || reloading) return;
+      reloading = true;
+      location.reload();
+    });
+    navigator.serviceWorker.register('./sw.js').catch(e => console.warn('sw:', e));
+  }
+})();
+</script>
+<script>
+document.body.dataset.boot = 'программа запущена';
+// <inline:logic.js>
+// Чистая логика трекера: без DOM и без window.claude, чтобы проверять в node.
+
+const FEELS = [['easy', 'легко'], ['ok', 'норм'], ['hard', 'тяжело'], ['pain', 'больно']];
+
+// «6 6 5», «6,6,5», «6·6·5», «30+40» → числа по подходам; «3×6» → [6,6,6]; пусто → план.
+function parseDone(text, ex) {
+  const t = (text || '').trim();
+  if (!t) return Array(ex.sets).fill(ex.target);
+  const mult = t.match(/^(\d+)\s*[×x*хХ]\s*(\d+)$/);
+  if (mult) {
+    const sets = +mult[1], reps = +mult[2];
+    return sets > 0 && reps > 0 ? Array(sets).fill(reps) : null;
+  }
+  if (/-\s*\d/.test(t)) return null;
+  const nums = (t.match(/\d+/g) || []).map(Number);
+  if (!nums.length || nums.some(n => n <= 0)) return null;
+  // Слитые цифры («665» вместо «6 6 5») и лишние подходы — не похоже на правду, просим переписать.
+  if (nums.length > ex.sets + 2 || nums.some(n => n > Math.max(3 * ex.target, 10))) return null;
+  return nums;
+}
+
+// Запись одного упражнения одним обращением к хранилищу; закрытие тренировки — в той же записи.
+function buildSaveWrite(existing, plan, cur, exId, entry, now) {
+  const entries = { ...(existing?.entries || {}), [exId]: entry };
+  const closes = !existing?.closed && isComplete(plan, { entries });
+  const patch = { entries: { [exId]: entry } };
+  if (closes) patch.closed = true;
+  if (!existing) {
+    // patch — на случай, если второй телефон уже создал документ: дописать, а не затереть.
+    return { op: 'set', closes, patch, data: { index: cur.index, type: cur.type, startedAt: now, closed: closes, entries: { [exId]: entry } } };
+  }
+  return { op: 'update', closes, data: patch };
+}
+
+const unitSuffix = ex => (ex.unit === 'sec' ? ' сек' : '');
+
+function formatPlan(ex) {
+  let s = `${ex.sets} × ${ex.target}${unitSuffix(ex)}`;
+  if (ex.perSide) s += ' (каждая)';
+  if (ex.extra) s += ', ' + ex.extra;
+  return s;
+}
+
+function formatDone(done, ex) {
+  return done.join(' · ') + unitSuffix(ex);
+}
+
+// Первая незакрытая тренировка блока по порядку; все закрыты → null.
+function currentSession(block, sessions) {
+  const closed = new Set(sessions.filter(s => s.closed).map(s => s.index));
+  for (let i = 1; i <= block.length; i++) {
+    if (!closed.has(i)) return { index: i, type: block.order[i - 1] };
+  }
+  return null;
+}
+
+function isComplete(plan, session) {
+  const entries = (session && session.entries) || {};
+  return plan.every(ex => entries[ex.exId] !== undefined);
+}
+
+// Последняя запись упражнения строго раньше текущей тренировки (блок, номер) — для подсказки «в прошлый раз».
+function previousEntry(exId, history, blockN, index) {
+  let best = null;
+  for (const s of history) {
+    const e = s.entries && s.entries[exId];
+    if (!e) continue;
+    const before = s.blockN < blockN || (s.blockN === blockN && s.index < index);
+    if (before && (!best || s.blockN > best.blockN || (s.blockN === best.blockN && s.index > best.index))) best = { ...s, e };
+  }
+  return best ? best.e : null;
+}
+// </inline:logic.js>
+
+// <inline:planner.js>
+const PULLING_CORE = new Set(['hang', 'neg', 'aus']);
+const KNEE_LOAD = new Set(['lunge', 'squat', 'wall_sit']);
+
+const CATALOG = {
+  bridge: {
+    exId: 'bridge', name: 'Ягодичный мостик', sets: 2, target: 15, unit: 'reps', perSide: false,
+    how: 'Лёжа на спине, стопы у таза. Поднять таз до прямой линии колени–плечи, наверху сжать ягодицы на 2 секунды.',
+  },
+  wide_pushup: {
+    exId: 'wide_pushup', name: 'Отжимания с широкой постановкой рук', sets: 2, target: 8, unit: 'reps', perSide: false,
+    how: 'Ладони чуть шире плеч, корпус прямой, локти примерно под 45°. Движение без боли в плечах и запястьях.',
+  },
+  hip_hinge: {
+    exId: 'hip_hinge', name: 'Наклон с прямой спиной', sets: 2, target: 12, unit: 'reps', perSide: false,
+    how: 'Ноги на ширине таза, колени слегка мягкие. Таз назад, корпус наклоняется с нейтральной спиной; вверх за счёт ягодиц.',
+  },
+  bird_dog: {
+    exId: 'bird_dog', name: 'Птица-собака', sets: 2, target: 8, unit: 'reps', perSide: true,
+    how: 'Стоя на четвереньках, вытянуть противоположные руку и ногу. Таз и поясница не поворачиваются, движение медленное.',
+  },
+  split_squat: {
+    exId: 'split_squat', name: 'Приседание в выпаде на месте', sets: 2, target: 8, unit: 'reps', perSide: true,
+    how: 'Ноги в шаге, корпус вертикален, переднее колено над стопой. Опускаться на комфортную глубину без боли.',
+  },
+  close_pushup: {
+    exId: 'close_pushup', name: 'Отжимания с узкой постановкой рук', sets: 2, target: 8, unit: 'reps', perSide: false,
+    how: 'Ладони примерно на ширине плеч, локти движутся вдоль корпуса. Можно делать с колен, корпус остаётся прямым.',
+  },
+  dead_bug: {
+    exId: 'dead_bug', name: 'Мёртвый жук', sets: 2, target: 8, unit: 'reps', perSide: true,
+    how: 'Лёжа на спине, поясница прижата. Медленно выпрямлять противоположные руку и ногу, не отрывая поясницу от пола.',
+  },
+};
+
+const VARIETY = {
+  pushup: 'wide_pushup',
+  bridge: 'hip_hinge',
+  side_plank: 'bird_dog',
+  lunge: 'split_squat',
+  bench_dip: 'close_pushup',
+  wall_sit: 'hip_hinge',
+  squat: 'split_squat',
+  leg_raise: 'dead_bug',
+  plank: 'bird_dog',
+};
+
+const cloneExercise = ex => ({ ...ex });
+
+function entriesFor(sessions, type, exId) {
+  return sessions
+    .filter(s => (s.type || s.orderType) === type)
+    .map(s => ({ ...s.entries?.[exId], index: s.index, blockN: s.blockN, type: s.type || s.orderType }))
+    .filter(e => e.done && e.feel)
+    .sort((a, b) => (a.blockN || 0) - (b.blockN || 0) || a.index - b.index);
+}
+
+function fullCompletion(entry, ex) {
+  return entry.done.length >= ex.sets && entry.done.slice(0, ex.sets).every(n => n >= ex.target);
+}
+
+function increased(ex) {
+  const next = cloneExercise(ex);
+  if ((ex.unit === 'sec' ? ex.target >= 60 : ex.target >= 20) && ex.sets < 4) next.sets += 1;
+  else next.target += ex.unit === 'sec' ? 5 : 1;
+  return next;
+}
+
+function decreased(ex) {
+  const next = cloneExercise(ex);
+  next.target = ex.unit === 'sec' ? Math.max(5, ex.target - 5) : Math.max(1, ex.target - 1);
+  return next;
+}
+
+function bannedFromHistory(history) {
+  const banned = new Set();
+  for (const s of history) {
+    for (const [exId, entry] of Object.entries(s.entries || {})) {
+      if (entry.feel !== 'pain') continue;
+      banned.add(exId);
+      if (/колен/i.test(entry.where || '') && KNEE_LOAD.has(exId)) {
+        for (const id of [...KNEE_LOAD, 'split_squat']) banned.add(id);
+      }
+    }
+  }
+  return banned;
+}
+
+function noChangeReason(entries, ex) {
+  if (!entries.length) return 'Записей пока нет — оставляем исходную нагрузку.';
+  if (entries.length < 2) return 'Для прибавки нужно больше записей.';
+  if (entries.some(e => e.feel === 'hard')) return 'Была отметка «тяжело» — не прибавляем.';
+  const lastTwo = entries.slice(-2);
+  if (lastTwo.every(e => e.feel === 'easy') && !lastTwo.every(e => fullCompletion(e, ex))) {
+    return 'Было легко, но план выполнен не полностью — пока не прибавляем.';
+  }
+  return 'По последним записям оснований для прибавки нет.';
+}
+
+function analyseExercise(ex, type, sessions, history, options, usedIds) {
+  const before = cloneExercise(ex);
+  const entries = entriesFor(sessions.map(s => ({ ...s, orderType: type })), type, ex.exId);
+  const previousEntries = entriesFor(
+    history.filter(s => s.blockN === options.blockNumber - 1).map(s => ({ ...s, orderType: type })),
+    type,
+    ex.exId,
+  );
+  const pain = entries.find(e => e.feel === 'pain');
+  const base = { type, exId: ex.exId, name: ex.name, before, entries };
+
+  if (pain) {
+    const kneePain = /колен/i.test(pain.where || '') && KNEE_LOAD.has(ex.exId);
+    if (kneePain && !usedIds.has('bridge')) {
+      return { ...base, after: cloneExercise(CATALOG.bridge), kind: 'replace', reason: 'Боль в колене — заменяем на ягодичный мостик.' };
+    }
+    return {
+      ...base,
+      after: null,
+      kind: 'remove',
+      reason: kneePain
+        ? 'Боль в колене — упражнение убрано; мостик уже есть в этой тренировке.'
+        : `Боль${pain.where ? `: ${pain.where}` : ''} — упражнение убрано, безопасную замену нужно подобрать отдельно.`,
+    };
+  }
+
+  const last = entries.at(-1);
+  const hardBefore = previousEntries.at(-1)?.feel === 'hard';
+  if (last?.feel === 'hard' && (hardBefore || options.conservative)) {
+    return {
+      ...base,
+      after: decreased(ex),
+      kind: 'decrease',
+      reason: options.conservative
+        ? 'Щадящий режим: после «тяжело» немного снижаем нагрузку.'
+        : 'Было тяжело в этом и прошлом блоке — немного снижаем нагрузку.',
+    };
+  }
+
+  const altId = VARIETY[ex.exId];
+  if (options.variety && altId && !PULLING_CORE.has(ex.exId) && !entries.some(e => e.feel === 'hard') && !usedIds.has(altId) && !options.banned.has(altId)) {
+    return {
+      ...base,
+      after: cloneExercise(CATALOG[altId]),
+      kind: 'replace',
+      reason: 'Для разнообразия заменяем вспомогательное упражнение; нагрузка — стартовая для нового варианта.',
+    };
+  }
+
+  if (!options.conservative && entries.length >= 2) {
+    const lastTwo = entries.slice(-2);
+    if (lastTwo.every(e => e.feel === 'easy' && fullCompletion(e, ex))) {
+      return { ...base, after: increased(ex), kind: 'increase', reason: 'Два последних раза было легко, план выполнен полностью.' };
+    }
+    if (ex.unit === 'reps' && entries.every(e => e.feel === 'ok' && fullCompletion(e, ex))) {
+      return { ...base, after: increased(ex), kind: 'increase', reason: 'Во всех записях блока «норм», план выполнен полностью.' };
+    }
+  }
+
+  return { ...base, after: cloneExercise(ex), kind: 'same', reason: noChangeReason(entries, ex) };
+}
+
+function planNextBlock({ block, sessions, history = [], length = block.length, conservative = false, variety = false, startedAt = null }) {
+  const nextLength = length === 6 ? 6 : 4;
+  const options = { blockNumber: block.n, conservative, variety, banned: bannedFromHistory(history) };
+  const analysis = [];
+  const plan = {};
+
+  for (const type of ['A', 'B']) {
+    const usedIds = new Set((block.plan[type] || []).map(ex => ex.exId));
+    const rows = (block.plan[type] || []).map(ex => analyseExercise(ex, type, sessions, history, options, usedIds));
+    for (const row of rows) if (row.after) usedIds.add(row.after.exId);
+    analysis.push(...rows);
+    plan[type] = rows.map(row => row.after).filter(Boolean);
+  }
+
+  return {
+    analysis,
+    block: {
+      n: block.n + 1,
+      status: 'active',
+      length: nextLength,
+      order: Array.from({ length: nextLength }, (_, i) => i % 2 ? 'B' : 'A'),
+      startedAt,
+      plan,
+    },
+  };
+}
+// </inline:planner.js>
+
+// <inline:store.js>
+// Хранилище на localStorage: замена документной базе артефакта claude.ai.
+// Тот же минимальный интерфейс, который использует страница:
+//   db.doc(path)     -> { onSnapshot(cb), update(patch), set(data) }
+//   db.collection(p) -> { onSnapshot(cb), get() }
+// Снапшоты: документ — { exists, data() }, коллекция — { docs: [{ id, data() }] }.
+// Плоский формат { docs: [{ path, data }] } — общий для seed.json, копии и выгрузки
+// со старой страницы: его же принимает importAll и отдаёт exportAll.
+
+const LS_KEY = 'workout.db.v1';
+
+const clone = v => (v === undefined ? undefined : JSON.parse(JSON.stringify(v)));
+
+function createDb(storage) {
+  let state = {};
+  try { state = JSON.parse(storage.getItem(LS_KEY) || '{}') || {}; } catch { state = {}; }
+
+  const listeners = new Set();
+
+  const persist = () => storage.setItem(LS_KEY, JSON.stringify(state));
+
+  const docSnap = path => ({ exists: state[path] !== undefined, data: () => clone(state[path]) });
+
+  const colSnap = path => {
+    const prefix = path + '/';
+    return {
+      docs: Object.keys(state)
+        .filter(k => k.startsWith(prefix) && !k.slice(prefix.length).includes('/'))
+        .sort()
+        .map(k => ({ id: k.slice(prefix.length), data: () => clone(state[k]) })),
+    };
+  };
+
+  function emit(l) {
+    try { l.cb(l.kind === 'doc' ? docSnap(l.path) : colSnap(l.path)); }
+    catch (e) { if (l.errCb) l.errCb(e); else console.error(e); }
+  }
+  const notifyAll = () => { for (const l of [...listeners]) emit(l); };
+
+  function subscribe(kind, path, cb, errCb) {
+    const l = { kind, path, cb, errCb };
+    listeners.add(l);
+    queueMicrotask(() => { if (listeners.has(l)) emit(l); });
+    return () => listeners.delete(l);
+  }
+
+  const api = {
+    doc(path) {
+      return {
+        onSnapshot: (cb, errCb) => subscribe('doc', path, cb, errCb),
+        update(patch) {
+          if (state[path] === undefined) {
+            const e = new Error('Нет документа: ' + path);
+            e.code = 'invalid_argument';
+            return Promise.reject(e);
+          }
+          state[path] = { ...state[path], ...clone(patch) };
+          persist(); notifyAll();
+          return Promise.resolve();
+        },
+        set(data) {
+          state[path] = clone(data);
+          persist(); notifyAll();
+          return Promise.resolve();
+        },
+      };
+    },
+    collection(path) {
+      return {
+        onSnapshot: (cb, errCb) => subscribe('col', path, cb, errCb),
+        get: () => Promise.resolve(colSnap(path)),
+      };
+    },
+    isEmpty: () => Object.keys(state).length === 0,
+    docCount: () => Object.keys(state).length,
+    exportAll() {
+      return {
+        app: 'workout', version: 1, exportedAt: new Date().toISOString(),
+        docs: Object.keys(state).sort().map(path => ({ path, data: clone(state[path]) })),
+      };
+    },
+    validateImport(json) {
+      if (!json || !Array.isArray(json.docs)) throw new Error('В файле нет списка docs');
+      for (const d of json.docs) {
+        if (!d || typeof d.path !== 'string' || !d.path.startsWith('people/')) throw new Error('Странный путь в копии: ' + (d && d.path));
+        if (!d.data || typeof d.data !== 'object') throw new Error('Нет данных у документа: ' + d.path);
+      }
+      return json.docs.length;
+    },
+    importAll(json) {
+      api.validateImport(json);
+      const next = {};
+      for (const d of json.docs) next[d.path] = clone(d.data);
+      state = next;
+      persist(); notifyAll();
+      return Object.keys(state).length;
+    },
+    // Подхват изменений, внесённых другой вкладкой этого же браузера.
+    reload() {
+      try { state = JSON.parse(storage.getItem(LS_KEY) || '{}') || {}; } catch { state = {}; }
+      notifyAll();
+    },
+  };
+  return api;
+}
+
+function openDb() {
+  let storage = null;
+  try { storage = globalThis.localStorage; } catch { storage = null; }
+  if (!storage) return Promise.resolve(null);
+  const db = createDb(storage);
+  try {
+    globalThis.addEventListener?.('storage', e => { if (e.key === LS_KEY) db.reload(); });
+  } catch { /* старые браузеры — просто без синхронизации вкладок */ }
+  return Promise.resolve(db);
+}
+// </inline:store.js>
+
+const FEEL_LABEL = Object.fromEntries(FEELS);
+const TYPE_LABEL = { A: 'А', B: 'Б' };
+const BACKUP_AT_KEY = 'workout.backupAt';
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+let person = 'fedor';
+try { const p = localStorage.getItem('workout.person'); if (p === 'fedor' || p === 'olya') person = p; } catch {}
+
+const st = { db: null, noDb: false, personDoc: null, blockId: null, block: null, sessions: [], loaded: false,
+  openEx: null, drafts: {}, draftsKey: null, prevHist: [], prevFor: null, saving: false, error: null, justClosed: null, timer: null,
+  planOptions: null, plannerHistory: [], plannerHistoryFor: null, plannerLoading: false, plannerError: null };
+let unsubs = [], blockUnsubs = [];
+
+function stopAll(list) { list.forEach(u => { try { u(); } catch {} }); list.length = 0; }
+
+function subscribe() {
+  stopAll(unsubs); stopAll(blockUnsubs);
+  Object.assign(st, { personDoc: null, blockId: null, block: null, sessions: [], loaded: false, openEx: null, drafts: {}, error: null, justClosed: null, timer: null,
+    planOptions: null, plannerHistory: [], plannerHistoryFor: null, plannerLoading: false, plannerError: null });
+  render();
+  unsubs.push(st.db.doc(`people/${person}`).onSnapshot(snap => {
+    st.personDoc = snap.exists ? snap.data() : null;
+    const b = st.personDoc?.activeBlock || null;
+    if (b !== st.blockId) { st.blockId = b; subscribeBlock(); }
+    if (!b) { st.loaded = true; render(); }
+  }, onDbError));
+}
+
+function subscribeBlock() {
+  stopAll(blockUnsubs);
+  st.block = null; st.sessions = [];
+  st.planOptions = null; st.plannerHistory = []; st.plannerHistoryFor = null; st.plannerLoading = false; st.plannerError = null;
+  if (!st.blockId) return;
+  const base = `people/${person}/blocks/${st.blockId}`;
+  let gotBlock = false, gotSessions = false;
+  blockUnsubs.push(st.db.doc(base).onSnapshot(snap => {
+    st.block = snap.exists ? snap.data() : null; gotBlock = true;
+    if (st.block) loadPrevBlock(person, st.blockId, st.block.n);
+    st.loaded = gotBlock && gotSessions; render();
+  }, onDbError));
+  blockUnsubs.push(st.db.collection(`${base}/sessions`).onSnapshot(snap => {
+    st.sessions = snap.docs.map(d => d.data()); gotSessions = true;
+    st.loaded = gotBlock && gotSessions; render();
+    if (st.loaded && st.block && !currentSession(st.block, st.sessions)) loadPlannerHistory(person, st.blockId);
+  }, onDbError));
+}
+
+// История прошлого блока — один раз на блок, для подсказки «в прошлый раз» на первых тренировках нового блока.
+async function loadPrevBlock(p, blockId, n) {
+  const key = `${p}/${blockId}`;
+  if (st.prevFor === key) return;
+  st.prevFor = key; st.prevHist = [];
+  if (!(n > 1)) return;
+  try {
+    const blocks = await st.db.collection(`people/${p}/blocks`).get();
+    const prev = blocks.docs.find(d => d.data().n === n - 1);
+    if (!prev) return;
+    const ss = await st.db.collection(`people/${p}/blocks/${prev.id}/sessions`).get();
+    if (st.prevFor !== key) return;
+    st.prevHist = ss.docs.map(d => ({ blockN: n - 1, ...d.data() }));
+    render();
+  } catch (e) { console.warn(e); }
+}
+
+async function loadPlannerHistory(p, blockId) {
+  const key = `${p}/${blockId}`;
+  if (st.plannerHistoryFor === key || st.plannerLoading) return;
+  st.plannerLoading = true; st.plannerError = null; render();
+  try {
+    const blocks = await st.db.collection(`people/${p}/blocks`).get();
+    const history = [];
+    for (const b of blocks.docs) {
+      const n = b.data().n;
+      const ss = await st.db.collection(`people/${p}/blocks/${b.id}/sessions`).get();
+      history.push(...ss.docs.map(d => ({ blockN: n, ...d.data() })));
+    }
+    if (st.plannerHistoryFor !== null && st.plannerHistoryFor !== key) return;
+    if (person !== p || st.blockId !== blockId) return;
+    st.plannerHistory = history; st.plannerHistoryFor = key;
+  } catch (e) {
+    console.warn(e);
+    if (person === p && st.blockId === blockId) st.plannerError = 'Не удалось прочитать всю старую историю. Предложение использует только текущий блок.';
+  } finally {
+    if (person === p && st.blockId === blockId) { st.plannerLoading = false; render(); }
+  }
+}
+
+function onDbError(e) { st.error = 'Записи не открылись. Попробуй ещё раз или сохрани копию кнопкой ниже.'; st.loaded = false; console.warn(e); render(); }
+
+// Какая тренировка на экране: только что закрытая (пока не нажали «Следующая») или текущая по очереди.
+function shownSession() {
+  if (!st.block) return null;
+  if (st.justClosed) return { index: st.justClosed, type: st.block.order[st.justClosed - 1] };
+  return currentSession(st.block, st.sessions);
+}
+const sessionDoc = idx => st.sessions.find(s => s.index === idx) || null;
+
+function plannerOptions() {
+  if (!st.planOptions) st.planOptions = { length: st.block.length === 6 ? 6 : 4, conservative: false, variety: false };
+  return st.planOptions;
+}
+
+function currentPlan() {
+  return planNextBlock({
+    block: st.block,
+    sessions: st.sessions,
+    history: st.plannerHistory,
+    ...plannerOptions(),
+    startedAt: new Date().toISOString().slice(0, 10),
+  });
+}
+
+function render() {
+  for (const b of document.querySelectorAll('.people button')) { b.setAttribute('aria-pressed', String(b.dataset.person === person)); b.disabled = st.saving; }
+  updateBackupHint();
+  const head = $('head'), main = $('main');
+  if (st.noDb) {
+    head.innerHTML = `<h1>Записи не открылись</h1>`;
+    main.innerHTML = `<div class="note"><p>Браузер запретил локальное хранилище. Открой страницу в обычном браузере (Chrome, Safari), не в режиме «инкогнито».</p></div>`;
+    return;
+  }
+  if (st.error && !st.loaded) { head.innerHTML = `<h1>Не получилось загрузить</h1>`; main.innerHTML = `<div class="err">${esc(st.error)}</div>`; return; }
+  if (!st.db || !st.loaded) { return; }
+  if (!st.block) {
+    head.innerHTML = `<h1>Программы пока нет</h1>`;
+    main.innerHTML = `<div class="note"><p>Для этого человека ещё не загружен блок тренировок. Ассистент пришлёт файл программы — загрузи его кнопкой «Загрузить копию» ниже.</p></div>`;
+    return;
+  }
+  const cur = shownSession();
+  const dots = st.block.order.map((_, i) => {
+    const s = sessionDoc(i + 1);
+    const cls = s?.closed ? 'closed' : (cur && cur.index === i + 1 ? 'now' : '');
+    return `<span class="dot ${cls}"></span>`;
+  }).join('');
+  if (!cur) {
+    head.innerHTML = `<h1>Блок ${esc(st.block.n)} пройден</h1><div class="dots">${dots}</div>`;
+    if (st.plannerLoading) {
+      main.innerHTML = `<div class="note"><h2>Разбираю записи</h2><p>Собираю историю, чтобы предложить следующий блок.</p></div>`;
+      return;
+    }
+    main.innerHTML = plannerHtml(currentPlan());
+    return;
+  }
+  head.innerHTML = `<h1>Тренировка ${TYPE_LABEL[cur.type]}</h1>
+    <div class="sub">Блок ${esc(st.block.n)} · тренировка ${cur.index} из ${esc(st.block.length)}</div><div class="dots">${dots}</div>`;
+
+  // Черновики живут в пределах одной тренировки: у А и Б есть общие упражнения.
+  const key = `${person}/${st.blockId}/${cur.index}`;
+  if (st.draftsKey !== key) { st.drafts = {}; st.draftsKey = key; }
+  const plan = st.block.plan[cur.type] || [];
+  const sess = sessionDoc(cur.index);
+  const entries = sess?.entries || {};
+  const firstOpen = plan.find(ex => !entries[ex.exId])?.exId || null;
+  const openId = st.openEx ?? (st.justClosed ? null : firstOpen);
+
+  let html = '';
+  if (st.justClosed) {
+    html += `<div class="note"><h2>Тренировка записана 💪</h2><p>Нажми на упражнение, если нужно что-то поправить.</p>
+      <button type="button" class="save" id="next-btn">${cur.index === st.block.length ? 'К итогам блока' : 'Дальше'}</button></div>`;
+  }
+  if (st.error) html += `<div class="err">${esc(st.error)}</div>`;
+  if (!st.justClosed && sess && !sess.closed && isComplete(plan, sess)) {
+    html += `<div class="note"><h2>Все упражнения записаны</h2><p>Тренировка ещё не закрыта — похоже, пропала связь.</p>
+      ${st.closeError ? `<div class="err">${esc(st.closeError)}</div>` : ''}
+      <button type="button" class="save" id="close-btn" ${st.saving ? 'disabled' : ''}>Закрыть тренировку</button></div>`;
+  }
+  const hist = st.prevHist.concat(st.sessions.map(x => ({ blockN: st.block.n, ...x })));
+  html += plan.map(ex => exCard(ex, entries[ex.exId], ex.exId === openId, previousEntry(ex.exId, hist, st.block.n, cur.index))).join('');
+  // Перерисовка по обновлению с другой вкладки не должна закрывать клавиатуру.
+  const ae = document.activeElement;
+  const keep = ae && ae.tagName === 'INPUT' && main.contains(ae) ? { id: ae.id, s: ae.selectionStart, e: ae.selectionEnd } : null;
+  main.innerHTML = html;
+  for (const ex of plan) if (ex.exId === openId) restoreDraft(ex, entries[ex.exId]);
+  if (keep) { const el = $(keep.id); if (el) { el.focus(); try { el.setSelectionRange(keep.s, keep.e); } catch {} } }
+}
+
+function plannerHtml(result) {
+  const options = plannerOptions();
+  const disabled = st.saving ? 'disabled' : '';
+  const labels = { increase: '↑ прибавка', decrease: '↓ снижение', replace: 'нов.', remove: 'убрано', same: 'без изменений' };
+  const typeHtml = type => result.analysis.filter(row => row.type === type).map(row => {
+    const entries = row.entries.length
+      ? row.entries.map(e => `Тренировка ${e.index}: ${formatDone(e.done, row.before)} · ${FEEL_LABEL[e.feel] || e.feel}${e.where ? ` · ${e.where}` : ''}`).join('<br>')
+      : 'Записей нет';
+    const after = row.after
+      ? `Стало: <b>${esc(row.after.name)}</b> · ${esc(formatPlan(row.after))}`
+      : '<b>Убрано из следующего блока</b>';
+    return `<div class="decision">
+      <div class="decision-head"><b>${esc(row.before.name)}</b><span class="tag ${row.kind}">${labels[row.kind]}</span></div>
+      <div class="hint">Было: ${esc(formatPlan(row.before))}</div>
+      <div>${after}</div>
+      <details><summary>Записи блока</summary><p>${esc(entries).replace(/&lt;br&gt;/g, '<br>')}</p></details>
+      <div class="reason">${esc(row.reason)}</div>
+    </div>`;
+  }).join('');
+
+  return `<div class="note"><h2>Разбор и следующий блок</h2>
+    <p>Приложение рассчитало нагрузку по вашим отметкам. Проверь предложение перед началом.</p>
+    ${st.plannerError ? `<div class="err">${esc(st.plannerError)}</div>` : ''}
+    ${st.error ? `<div class="err">${esc(st.error)}</div>` : ''}
+    <div class="field"><label class="lbl" for="next-length">Длина блока</label>
+      <select id="next-length" ${disabled}>
+        <option value="4" ${options.length === 4 ? 'selected' : ''}>4 тренировки</option>
+        <option value="6" ${options.length === 6 ? 'selected' : ''}>6 тренировок</option>
+      </select></div>
+    <label class="check"><input type="checkbox" id="next-conservative" ${options.conservative ? 'checked' : ''} ${disabled}><span>Щадящий режим: без автоматических прибавок</span></label>
+    <label class="check"><input type="checkbox" id="next-variety" ${options.variety ? 'checked' : ''} ${disabled}><span>Добавить разнообразие: заменить до одного вспомогательного упражнения в А и Б</span></label>
+  </div>
+  <div class="note"><h2>Тренировка А</h2>${typeHtml('A') || '<p>Упражнений нет</p>'}</div>
+  <div class="note"><h2>Тренировка Б</h2>${typeHtml('B') || '<p>Упражнений нет</p>'}</div>
+  ${result.analysis.some(row => row.kind === 'remove') ? '<div class="err">Есть упражнения, убранные из-за боли. Безопасную замену лучше подобрать отдельно.</div>' : ''}
+  <button type="button" class="save" id="accept-next" ${disabled}>${st.saving ? 'Сохраняю…' : `Принять — начать блок ${result.block.n}`}</button>
+  <div class="hint">До подтверждения текущая программа не меняется.</div>`;
+}
+
+function exCard(ex, entry, open, prev) {
+  const cls = ['ex', entry ? 'done' : '', open ? 'open' : ''].join(' ');
+  const right = entry ? `${formatDone(entry.done, ex)} · ${FEEL_LABEL[entry.feel] || ''}` : formatPlan(ex);
+  let s = `<div class="${cls}" data-ex="${esc(ex.exId)}">
+    <button type="button" class="ex-row" data-toggle="${esc(ex.exId)}" aria-expanded="${open}">
+      <span class="name">${esc(ex.name)}</span><span class="plan">${esc(right)}</span></button>`;
+  if (open) {
+    const d = draftFor(ex, entry);
+    s += `<div class="body">
+      <div class="big">${esc(formatPlan(ex))}</div>
+      ${prev ? `<div class="prev">В прошлый раз: <b>${esc(formatDone(prev.done, ex))}</b> · ${esc(FEEL_LABEL[prev.feel] || '')}</div>` : ''}
+      ${ex.unit === 'sec' ? timerHtml(ex) : ''}
+      ${ex.how ? `<details><summary>Как делать</summary><p>${esc(ex.how)}</p></details>` : ''}
+      <div class="field"><label class="lbl" for="done-${esc(ex.exId)}">Сделал${ex.unit === 'sec' ? ', секунды' : ''}</label>
+        <input type="text" inputmode="decimal" autocomplete="off" id="done-${esc(ex.exId)}" placeholder="по плану">
+        <span class="hint">${ex.unit === 'sec' ? 'Секундомер сам впишет время подхода. ' : ''}Пусто — ровно по плану (${esc(Array(ex.sets).fill(ex.target).join(' · '))}). Иначе числа по подходам через запятую: 6,6,5</span></div>
+      <div class="field"><span class="lbl">Как было</span>
+        <div class="feels" role="group" aria-label="Как было">${FEELS.map(([k, l]) =>
+          `<button type="button" data-feel="${k}" aria-pressed="${d.feel === k}">${l}</button>`).join('')}</div></div>
+      <div class="field" ${d.feel === 'pain' ? '' : 'hidden'} id="where-wrap-${esc(ex.exId)}">
+        <label class="lbl" for="where-${esc(ex.exId)}">Где болит?</label>
+        <input type="text" autocomplete="off" id="where-${esc(ex.exId)}" placeholder="например, правое колено"></div>
+      ${d.error ? `<div class="err">${esc(d.error)}</div>` : ''}
+      <button type="button" class="save" id="save-${esc(ex.exId)}" ${d.feel && !st.saving ? '' : 'disabled'}>${st.saving ? 'Записываю…' : 'Записать'}</button>
+    </div>`;
+  }
+  return s + `</div>`;
+}
+
+function timerHtml(ex) {
+  const t = st.timer && st.timer.exId === ex.exId ? st.timer : null;
+  const sec = t ? Math.floor((Date.now() - t.start) / 1000) : 0;
+  return `<div class="timer ${t ? 'run' : ''} ${sec >= ex.target ? 'reached' : ''}" id="timer">
+    <span class="tval" id="tval">${sec}</span><span class="tgoal">цель ${esc(ex.target)} сек${ex.perSide ? ' на сторону' : ''}</span>
+    <button type="button" class="tbtn" id="timer-btn">${t ? '■ Стоп' : '▶ Подход'}</button></div>`;
+}
+
+// Секундомер подхода: идёт вверх, на цели — вибрация и короткий сигнал, по «Стоп» секунды дописываются в «Сделал».
+let tickId = null;
+function beep() {
+  try {
+    const a = st.timer.audio; if (!a) return;
+    const o = a.createOscillator(), g = a.createGain();
+    o.frequency.value = 880; g.gain.value = 0.2; o.connect(g); g.connect(a.destination);
+    o.start(); o.stop(a.currentTime + 0.25);
+  } catch {}
+}
+function tick() {
+  const t = st.timer; if (!t) return;
+  const sec = Math.floor((Date.now() - t.start) / 1000);
+  const v = $('tval'); if (v) v.textContent = sec;
+  if (sec >= t.target) {
+    $('timer')?.classList.add('reached');
+    if (!t.signaled) { t.signaled = true; try { navigator.vibrate?.([200, 100, 200]); } catch {} beep(); }
+  }
+}
+function startTimer(ex) {
+  let audio = null;
+  try { audio = new (window.AudioContext || window.webkitAudioContext)(); } catch {}
+  st.timer = { exId: ex.exId, target: ex.target, start: Date.now(), signaled: false, audio };
+  clearInterval(tickId); tickId = setInterval(tick, 250);
+  render();
+}
+function stopTimer(keepResult) {
+  const t = st.timer; if (!t) return;
+  clearInterval(tickId); tickId = null; st.timer = null;
+  try { t.audio?.close(); } catch {}
+  const sec = Math.floor((Date.now() - t.start) / 1000);
+  const d = st.drafts[t.exId];
+  if (keepResult && d && sec > 0) {
+    d.text = ((($('done-' + t.exId)?.value) ?? d.text).trim() + ' ' + sec).trim();
+  }
+  render();
+}
+
+function draftFor(ex, entry) {
+  if (!st.drafts[ex.exId]) {
+    const planned = Array(ex.sets).fill(ex.target);
+    const same = entry && entry.done.length === planned.length && entry.done.every((n, i) => n === planned[i]);
+    st.drafts[ex.exId] = entry
+      ? { text: same ? '' : entry.done.join(' '), feel: entry.feel, where: entry.where || '' }
+      : { text: '', feel: null, where: '' };
+  }
+  return st.drafts[ex.exId];
+}
+function restoreDraft(ex, entry) {
+  const d = draftFor(ex, entry);
+  const i = $('done-' + ex.exId); if (i) i.value = d.text;
+  const w = $('where-' + ex.exId); if (w) w.value = d.where;
+}
+
+async function save(exId) {
+  const cur = shownSession(); if (!cur || st.saving) return;
+  if (st.timer) stopTimer(true);
+  const plan = st.block.plan[cur.type];
+  const ex = plan.find(e => e.exId === exId);
+  const d = st.drafts[exId];
+  const done = parseDone(d.text, ex);
+  if (!done) { d.error = 'Не понял числа. Напиши по подходам через запятую, например 6,6,5'; render(); return; }
+  d.error = null;
+  const entry = { done, feel: d.feel, where: d.feel === 'pain' ? (d.where.trim() || null) : null, at: new Date().toISOString() };
+  const ctx = { person, blockId: st.blockId };
+  const ref = st.db.doc(`people/${ctx.person}/blocks/${ctx.blockId}/sessions/s${cur.index}`);
+  const w = buildSaveWrite(sessionDoc(cur.index), plan, cur, exId, entry, new Date().toISOString());
+  const wasClosed = st.justClosed;
+  // Экран «записано» ставим до записи: хранилище показывает свою запись сразу, иначе мелькнёт следующая тренировка.
+  if (w.closes) st.justClosed = cur.index;
+  st.saving = true; render();
+  try {
+    if (w.op === 'set') {
+      // Документ мог уже появиться в другой вкладке — тогда дописываем, а не затираем.
+      try { await ref.update(w.patch); }
+      catch (e) { if (e?.code !== 'invalid_argument') throw e; await ref.set(w.data); }
+    } else await ref.update(w.data);
+    if (person === ctx.person) { delete st.drafts[exId]; st.openEx = null; }
+  } catch (e) {
+    console.warn(e);
+    if (person === ctx.person) { st.justClosed = wasClosed; d.error = 'Не сохранилось. Нажми «Записать» ещё раз.'; }
+  } finally {
+    st.saving = false; render();
+  }
+}
+
+async function closeSession() {
+  const cur = shownSession(); if (!cur || st.saving) return;
+  const ref = st.db.doc(`people/${person}/blocks/${st.blockId}/sessions/s${cur.index}`);
+  st.justClosed = cur.index; st.closeError = null; st.saving = true; render();
+  try { await ref.update({ closed: true }); }
+  catch (e) { console.warn(e); st.justClosed = null; st.closeError = 'Не получилось. Нажми ещё раз.'; }
+  finally { st.saving = false; render(); }
+}
+
+async function acceptNextBlock() {
+  if (st.saving || !st.block || currentSession(st.block, st.sessions)) return;
+  const p = person, oldId = st.blockId;
+  const next = currentPlan().block;
+  const nextId = 'b' + next.n;
+  st.saving = true; st.error = null; render();
+  try {
+    await st.db.doc(`people/${p}/blocks/${nextId}`).set(next);
+    await st.db.doc(`people/${p}`).update({ activeBlock: nextId });
+    await st.db.doc(`people/${p}/blocks/${oldId}`).update({ status: 'done' });
+  } catch (e) {
+    console.warn(e);
+    if (person === p) st.error = 'Не получилось начать новый блок. Нажми «Принять» ещё раз.';
+  } finally {
+    if (person === p) { st.saving = false; render(); }
+  }
+}
+
+// Копия данных: страховка от потери записей при чистке браузера или смене телефона.
+function updateBackupHint() {
+  const el = $('backup-hint'); if (!el) return;
+  let at = null;
+  try { at = localStorage.getItem(BACKUP_AT_KEY); } catch {}
+  const hasData = !!(st.block || st.sessions.length);
+  if (!at) { el.textContent = hasData ? 'Копия ещё не сохранялась — «Сохранить копию» защитит записи от потери.' : ''; return; }
+  const d = new Date(at);
+  if (isNaN(d)) { el.textContent = ''; return; }
+  const stale = Date.now() - d.getTime() > 14 * 864e5;
+  el.textContent = `Копия сохранялась ${d.toLocaleDateString('ru-RU')}.` + (stale && hasData ? ' Пора сохранить свежую.' : '');
+}
+
+$('export-btn').addEventListener('click', () => {
+  if (!st.db || st.db.isEmpty()) return;
+  const payload = JSON.stringify(st.db.exportAll(), null, 1);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([payload], { type: 'application/json' }));
+  a.download = `workout-копия-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  try { localStorage.setItem(BACKUP_AT_KEY, new Date().toISOString()); } catch {}
+  updateBackupHint();
+});
+
+$('import-btn').addEventListener('click', () => $('import-file').click());
+$('import-file').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value = '';
+  if (!f || !st.db) return;
+  let data;
+  try { data = JSON.parse(await f.text()); }
+  catch { alert('Не получилось прочитать файл: это не JSON.'); return; }
+  let n;
+  try { n = st.db.validateImport(data); }
+  catch (err) { alert('Этот файл не похож на копию данных тренировок. ' + err.message); return; }
+  if (!confirm(`Заменить все текущие записи данными из копии (${n} документов)?\n\nЕсли в копии старые записи, свежие на телефоне пропадут.`)) return;
+  try { st.db.importAll(data); }
+  catch (err) { alert('Не получилось загрузить копию: ' + err.message); }
+});
+
+document.addEventListener('click', e => {
+  const pb = e.target.closest('.people button');
+  if (pb) {
+    if (pb.dataset.person !== person && !st.saving) {
+      if (st.timer) stopTimer(false);
+      person = pb.dataset.person;
+      try { localStorage.setItem('workout.person', person); } catch {}
+      if (st.db) subscribe(); else render();
+    }
+    return;
+  }
+  if (e.target.closest('#accept-next')) { acceptNextBlock(); return; }
+  if (e.target.closest('#close-btn')) { closeSession(); return; }
+  if (e.target.closest('#timer-btn')) {
+    const exId = e.target.closest('[data-ex]').dataset.ex;
+    if (st.timer) stopTimer(true);
+    else { const cur = shownSession(); const ex = st.block.plan[cur.type].find(x => x.exId === exId); if (ex) startTimer(ex); }
+    return;
+  }
+  if (e.target.closest('#next-btn')) { st.justClosed = null; st.openEx = null; st.drafts = {}; render(); return; }
+  const t = e.target.closest('[data-toggle]');
+  if (t) {
+    const id = t.dataset.toggle;
+    const cur = shownSession();
+    const entries = sessionDoc(cur?.index)?.entries || {};
+    const firstOpen = st.justClosed ? null : (st.block.plan[cur.type].find(ex => !entries[ex.exId])?.exId || null);
+    const openNow = st.openEx ?? firstOpen;
+    if (st.timer) stopTimer(true);
+    st.openEx = openNow === id ? '' : id;
+    render(); return;
+  }
+  const fb = e.target.closest('.feels button');
+  if (fb) {
+    const exId = fb.closest('[data-ex]').dataset.ex;
+    st.drafts[exId].feel = fb.dataset.feel;
+    st.drafts[exId].text = $('done-' + exId)?.value ?? st.drafts[exId].text;
+    render(); return;
+  }
+  const sb = e.target.closest('.save[id^="save-"]');
+  if (sb) save(sb.id.slice(5));
+});
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter' || e.target.tagName !== 'INPUT') return;
+  const card = e.target.closest('[data-ex]'); if (!card) return;
+  e.preventDefault(); e.target.blur();
+  const btn = $('save-' + card.dataset.ex); if (btn && !btn.disabled) save(card.dataset.ex);
+});
+document.addEventListener('input', e => {
+  const m = e.target.id && e.target.id.match(/^(done|where)-(.+)$/);
+  if (!m || !st.drafts[m[2]]) return;
+  st.drafts[m[2]][m[1] === 'done' ? 'text' : 'where'] = e.target.value;
+});
+
+document.addEventListener('change', e => {
+  if (!['next-length', 'next-conservative', 'next-variety'].includes(e.target.id)) return;
+  const options = plannerOptions();
+  if (e.target.id === 'next-length') options.length = Number(e.target.value) === 6 ? 6 : 4;
+  if (e.target.id === 'next-conservative') options.conservative = e.target.checked;
+  if (e.target.id === 'next-variety') options.variety = e.target.checked;
+  render();
+});
+
+// <inline:seed/seed.json>
+const SEED = {
+  "docs": [
+    {
+      "path": "people/fedor",
+      "data": {
+        "name": "Фёдор",
+        "activeBlock": "b2"
+      }
+    },
+    {
+      "path": "people/fedor/blocks/b1",
+      "data": {
+        "n": 1,
+        "status": "done",
+        "length": 4,
+        "order": [
+          "A",
+          "B",
+          "A",
+          "B"
+        ],
+        "startedAt": "2026-09-28",
+        "plan": {
+          "A": [
+            {
+              "exId": "hang",
+              "name": "Вис на турнике",
+              "sets": 2,
+              "target": 20,
+              "unit": "sec",
+              "perSide": false,
+              "how": "Плечи активно опущены, не провисать"
+            },
+            {
+              "exId": "neg",
+              "name": "Негативные подтягивания",
+              "sets": 2,
+              "target": 3,
+              "unit": "reps",
+              "perSide": false,
+              "how": "Спуск 3–4 сек, подниматься прыжком/со скамьи. Попытки подтянуться — пока рано"
+            },
+            {
+              "exId": "pushup",
+              "name": "Отжимания от пола",
+              "sets": 2,
+              "target": 10,
+              "unit": "reps",
+              "perSide": false,
+              "how": "Спина прямая, локти под 45°"
+            },
+            {
+              "exId": "lunge",
+              "name": "Выпады вперёд",
+              "sets": 2,
+              "target": 10,
+              "unit": "reps",
+              "perSide": true,
+              "how": "Колено над пяткой, корпус вертикально"
+            },
+            {
+              "exId": "side_plank",
+              "name": "Боковая планка",
+              "sets": 2,
+              "target": 30,
+              "unit": "sec",
+              "perSide": true,
+              "how": "Бёдра вверху; начинать с левой (слабее)"
+            }
+          ],
+          "B": [
+            {
+              "exId": "hang",
+              "name": "Вис на турнике",
+              "sets": 1,
+              "target": 20,
+              "unit": "sec",
+              "perSide": false,
+              "how": "Плечи активно опущены"
+            },
+            {
+              "exId": "aus",
+              "name": "Австралийские подтягивания",
+              "sets": 3,
+              "target": 6,
+              "unit": "reps",
+              "perSide": false,
+              "how": "Тело прямое, лопатки вместе"
+            },
+            {
+              "exId": "bench_dip",
+              "name": "Отжимания от скамьи",
+              "sets": 2,
+              "target": 12,
+              "unit": "reps",
+              "perSide": false,
+              "how": "Корпус ровный, локти вдоль тела"
+            },
+            {
+              "exId": "squat",
+              "name": "Приседания",
+              "sets": 3,
+              "target": 15,
+              "unit": "reps",
+              "perSide": false,
+              "how": "Колени не выходят за носки"
+            },
+            {
+              "exId": "leg_raise",
+              "name": "Подъём ног лёжа (согнутые)",
+              "sets": 2,
+              "target": 10,
+              "unit": "reps",
+              "perSide": false,
+              "how": "Поясница прижата к полу"
+            },
+            {
+              "exId": "plank",
+              "name": "Планка",
+              "sets": 2,
+              "target": 30,
+              "unit": "sec",
+              "perSide": false,
+              "how": "Прямая линия от головы до пят"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "people/fedor/blocks/b2",
+      "data": {
+        "n": 2,
+        "status": "active",
+        "length": 4,
+        "order": [
+          "A",
+          "B",
+          "A",
+          "B"
+        ],
+        "startedAt": "2026-10-26",
+        "plan": {
+          "A": [
+            {
+              "exId": "hang",
+              "name": "Вис на турнике",
+              "sets": 3,
+              "target": 20,
+              "unit": "sec",
+              "perSide": false,
+              "how": "«Плечи опущены» = отвести плечи от ушей, как будто кладёте лопатки в задние карманы. Руки прямые, тело не болтается. Хват: большой палец обхватывает перекладину снизу («в замок»). Пальцы разжимаются — это нормально в начале: висите сколько держат, добирайте время частями."
+            },
+            {
+              "exId": "neg",
+              "name": "Негативные подтягивания",
+              "sets": 3,
+              "target": 3,
+              "unit": "reps",
+              "perSide": false,
+              "how": "Спуск 4–5 сек, подниматься прыжком/со скамьи"
+            },
+            {
+              "exId": "pushup",
+              "name": "Отжимания от пола",
+              "sets": 3,
+              "target": 12,
+              "unit": "reps",
+              "perSide": false,
+              "how": "Спина прямая, локти под 45°"
+            },
+            {
+              "exId": "bridge",
+              "name": "Ягодичный мостик",
+              "sets": 2,
+              "target": 15,
+              "unit": "reps",
+              "perSide": false,
+              "how": "Лёжа на спине, стопы у таза. Поднять таз до прямой линии колени–плечи, наверху сжать ягодицы 2 сек. Колени не болят — если болят, отметить"
+            },
+            {
+              "exId": "side_plank",
+              "name": "Боковая планка",
+              "sets": 2,
+              "target": 40,
+              "unit": "sec",
+              "perSide": true,
+              "how": "Бёдра вверху; начинать с левой (слабее)"
+            }
+          ],
+          "B": [
+            {
+              "exId": "hang",
+              "name": "Вис на турнике",
+              "sets": 2,
+              "target": 20,
+              "unit": "sec",
+              "perSide": false,
+              "how": "«Плечи опущены» = отвести плечи от ушей, как будто кладёте лопатки в задние карманы. Руки прямые, тело не болтается."
+            },
+            {
+              "exId": "aus",
+              "name": "Австралийские подтягивания",
+              "sets": 3,
+              "target": 6,
+              "unit": "reps",
+              "perSide": false,
+              "how": "Перекладина на уровне пояса, пятки на полу, тело прямое как доска. Тянуть грудь к перекладине, локти назад к рёбрам, наверху пауза 1 сек и свести лопатки, вниз 2 сек. Чем ниже перекладина/дальше ноги — тем тяжелее.",
+              "extra": "пауза наверху"
+            },
+            {
+              "exId": "bench_dip",
+              "name": "Отжимания от скамьи",
+              "sets": 3,
+              "target": 15,
+              "unit": "reps",
+              "perSide": false,
+              "how": "Корпус ровный, локти вдоль тела. Стало ещё легко — ноги поставить на стул"
+            },
+            {
+              "exId": "wall_sit",
+              "name": "Стульчик у стены",
+              "sets": 3,
+              "target": 20,
+              "unit": "sec",
+              "perSide": false,
+              "how": "Спина на стене, бёдра ВЫШЕ параллели (неглубоко), колени над пятками. Стоять, а не двигаться. Боль в колене — сразу выйти и отметить"
+            },
+            {
+              "exId": "leg_raise",
+              "name": "Подъём ног лёжа (согнутые)",
+              "sets": 2,
+              "target": 12,
+              "unit": "reps",
+              "perSide": false,
+              "how": "Лёжа на спине, руки вдоль тела, колени согнуты под 90°. Поясница прижата к полу всё время (подложите ладонь — она не должна освобождаться). Поднимать колени к груди, таз чуть отрывается; вниз медленно, 2–3 сек, стопы пола не касаются."
+            },
+            {
+              "exId": "plank",
+              "name": "Планка",
+              "sets": 2,
+              "target": 45,
+              "unit": "sec",
+              "perSide": false,
+              "how": "Прямая линия от головы до пят, живот и ягодицы напряжены"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "people/fedor/blocks/b1/sessions/s1",
+      "data": {
+        "index": 1,
+        "type": "A",
+        "week": 1,
+        "startedAt": null,
+        "closed": true,
+        "entries": {
+          "hang": {
+            "done": [
+              20,
+              20
+            ],
+            "feel": "ok",
+            "at": null,
+            "note": "из таблицы: разжимаются пальцы. Не совсем понятно, что такое \"активно оущены плечи\""
+          },
+          "neg": {
+            "done": [
+              3,
+              3
+            ],
+            "feel": "ok",
+            "at": null,
+            "note": "из таблицы: ок"
+          },
+          "pushup": {
+            "done": [
+              10,
+              10
+            ],
+            "feel": "easy",
+            "at": null,
+            "note": "из таблицы: можно больше"
+          },
+          "lunge": {
+            "done": [
+              10,
+              10
+            ],
+            "feel": "pain",
+            "at": null,
+            "note": "из таблицы: болят колени",
+            "where": "колени"
+          },
+          "side_plank": {
+            "done": [
+              30,
+              30
+            ],
+            "feel": "easy",
+            "at": null,
+            "note": "из таблицы: можно больше"
+          }
+        }
+      }
+    },
+    {
+      "path": "people/fedor/blocks/b1/sessions/s2",
+      "data": {
+        "index": 2,
+        "type": "B",
+        "week": 1,
+        "startedAt": null,
+        "closed": true,
+        "entries": {
+          "hang": {
+            "done": [
+              20
+            ],
+            "feel": "ok",
+            "at": null
+          },
+          "aus": {
+            "done": [
+              6,
+              6,
+              6
+            ],
+            "feel": "ok",
+            "at": null,
+            "note": "из таблицы: не до конца понятна правильная техника"
+          },
+          "bench_dip": {
+            "done": [
+              12,
+              12
+            ],
+            "feel": "easy",
+            "at": null,
+            "note": "из таблицы: очень легко"
+          },
+          "squat": {
+            "done": [
+              15,
+              15,
+              15
+            ],
+            "feel": "pain",
+            "at": null,
+            "note": "из таблицы: болят колени",
+            "where": "колени"
+          },
+          "leg_raise": {
+            "done": [
+              10,
+              10
+            ],
+            "feel": "ok",
+            "at": null,
+            "note": "из таблицы: непонятна правильная техника"
+          },
+          "plank": {
+            "done": [
+              30,
+              30
+            ],
+            "feel": "easy",
+            "at": null,
+            "note": "из таблицы: можно больше"
+          }
+        }
+      }
+    },
+    {
+      "path": "people/fedor/blocks/b1/sessions/s3",
+      "data": {
+        "index": 3,
+        "type": "A",
+        "week": 2,
+        "startedAt": null,
+        "closed": true,
+        "entries": {
+          "hang": {
+            "done": [
+              20,
+              20
+            ],
+            "feel": "ok",
+            "at": null,
+            "note": "из таблицы: разжимаются пальцы. Не совсем понятно, что такое \"активно оущены плечи\""
+          },
+          "neg": {
+            "done": [
+              3,
+              3
+            ],
+            "feel": "ok",
+            "at": null,
+            "note": "из таблицы: ок"
+          },
+          "pushup": {
+            "done": [
+              12,
+              12
+            ],
+            "feel": "easy",
+            "at": null,
+            "note": "из таблицы: можно больше"
+          },
+          "lunge": {
+            "done": [
+              10,
+              10
+            ],
+            "feel": "pain",
+            "at": null,
+            "note": "из таблицы: болят колени",
+            "where": "колени"
+          },
+          "side_plank": {
+            "done": [
+              30,
+              30
+            ],
+            "feel": "easy",
+            "at": null,
+            "note": "из таблицы: можно больше"
+          }
+        }
+      }
+    },
+    {
+      "path": "people/fedor/blocks/b1/sessions/s4",
+      "data": {
+        "index": 4,
+        "type": "B",
+        "week": 2,
+        "startedAt": null,
+        "closed": true,
+        "entries": {
+          "hang": {
+            "done": [
+              20
+            ],
+            "feel": "ok",
+            "at": null
+          },
+          "aus": {
+            "done": [
+              6,
+              6,
+              6
+            ],
+            "feel": "ok",
+            "at": null,
+            "note": "из таблицы: не до конца понятна правильная техника"
+          },
+          "bench_dip": {
+            "done": [
+              12,
+              12
+            ],
+            "feel": "easy",
+            "at": null,
+            "note": "из таблицы: очень легко"
+          },
+          "squat": {
+            "done": [
+              15,
+              15,
+              15
+            ],
+            "feel": "pain",
+            "at": null,
+            "note": "из таблицы: болят колени",
+            "where": "колени"
+          },
+          "leg_raise": {
+            "done": [
+              10,
+              10
+            ],
+            "feel": "ok",
+            "at": null,
+            "note": "из таблицы: непонятна правильная техника"
+          },
+          "plank": {
+            "done": [
+              30,
+              40
+            ],
+            "feel": "easy",
+            "at": null,
+            "note": "из таблицы: можно больше"
+          }
+        }
+      }
+    },
+    {
+      "path": "people/olya",
+      "data": {
+        "name": "Оля",
+        "activeBlock": "b2"
+      }
+    },
+    {
+      "path": "people/olya/blocks/b1",
+      "data": {
+        "n": 1,
+        "status": "done",
+        "length": 4,
+        "order": [
+          "A",
+          "B",
+          "A",
+          "B"
+        ],
+        "startedAt": "2026-09-28",
+        "plan": {
+          "A": [
+            {
+              "exId": "hang",
+              "name": "Вис на турнике",
+              "sets": 2,
+              "target": 20,
+              "unit": "sec",
+              "perSide": false,
+              "how": "Плечи опущены, корпус напряжён"
+            },
+            {
+              "exId": "neg",
+              "name": "Негативные подтягивания",
+              "sets": 2,
+              "target": 2,
+              "unit": "reps",
+              "perSide": false,
+              "how": "Максимально медленный спуск"
+            },
+            {
+              "exId": "pushup",
+              "name": "Отжимания от пола",
+              "sets": 2,
+              "target": 8,
+              "unit": "reps",
+              "perSide": false,
+              "how": "Ладони шире плеч; можно с колен"
+            },
+            {
+              "exId": "lunge",
+              "name": "Выпады",
+              "sets": 2,
+              "target": 8,
+              "unit": "reps",
+              "perSide": true,
+              "how": "Колено строго над пяткой"
+            },
+            {
+              "exId": "side_plank",
+              "name": "Боковая планка",
+              "sets": 2,
+              "target": 35,
+              "unit": "sec",
+              "perSide": true,
+              "how": "Бёдра приподняты, плечо над локтем"
+            }
+          ],
+          "B": [
+            {
+              "exId": "hang",
+              "name": "Вис на турнике",
+              "sets": 1,
+              "target": 20,
+              "unit": "sec",
+              "perSide": false,
+              "how": "Плечи опущены"
+            },
+            {
+              "exId": "aus",
+              "name": "Австралийские подтягивания",
+              "sets": 2,
+              "target": 6,
+              "unit": "reps",
+              "perSide": false,
+              "how": "Прямая линия корпуса, лопатки вместе"
+            },
+            {
+              "exId": "bench_dip",
+              "name": "Отжимания от скамьи",
+              "sets": 2,
+              "target": 10,
+              "unit": "reps",
+              "perSide": false,
+              "how": "Спина ровная"
+            },
+            {
+              "exId": "squat",
+              "name": "Приседания",
+              "sets": 3,
+              "target": 20,
+              "unit": "reps",
+              "perSide": false,
+              "how": "Колени не выходят за носки"
+            },
+            {
+              "exId": "leg_raise",
+              "name": "Подъём ног лёжа (согнутые)",
+              "sets": 2,
+              "target": 10,
+              "unit": "reps",
+              "perSide": false,
+              "how": "Поясница плотно к полу"
+            },
+            {
+              "exId": "plank",
+              "name": "Планка",
+              "sets": 2,
+              "target": 60,
+              "unit": "sec",
+              "perSide": false,
+              "how": "Линия ровная, плечи над локтями"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "people/olya/blocks/b2",
+      "data": {
+        "n": 2,
+        "status": "active",
+        "length": 4,
+        "order": [
+          "A",
+          "B",
+          "A",
+          "B"
+        ],
+        "startedAt": "2026-10-26",
+        "plan": {
+          "A": [
+            {
+              "exId": "hang",
+              "name": "Вис на турнике",
+              "sets": 2,
+              "target": 25,
+              "unit": "sec",
+              "perSide": false,
+              "how": "«Плечи опущены» = отвести плечи от ушей, как будто кладёте лопатки в задние карманы. Руки прямые, тело не болтается. Хват: большой палец обхватывает перекладину снизу («в замок»). Пальцы разжимаются — это нормально в начале: висите сколько держат, добирайте время частями."
+            },
+            {
+              "exId": "neg",
+              "name": "Негативные подтягивания",
+              "sets": 3,
+              "target": 3,
+              "unit": "reps",
+              "perSide": false,
+              "how": "Максимально медленный спуск, 4–5 сек"
+            },
+            {
+              "exId": "pushup",
+              "name": "Отжимания от пола",
+              "sets": 2,
+              "target": 10,
+              "unit": "reps",
+              "perSide": false,
+              "how": "Ладони шире плеч; можно с колен"
+            },
+            {
+              "exId": "lunge",
+              "name": "Выпады",
+              "sets": 2,
+              "target": 10,
+              "unit": "reps",
+              "perSide": true,
+              "how": "Колено строго над пяткой. Не болели — оставляем; заболят — заменить на ягодичный мостик"
+            },
+            {
+              "exId": "side_plank",
+              "name": "Боковая планка",
+              "sets": 2,
+              "target": 45,
+              "unit": "sec",
+              "perSide": true,
+              "how": "Бёдра приподняты, плечо над локтем"
+            }
+          ],
+          "B": [
+            {
+              "exId": "hang",
+              "name": "Вис на турнике",
+              "sets": 2,
+              "target": 30,
+              "unit": "sec",
+              "perSide": false,
+              "how": "«Плечи опущены» = отвести плечи от ушей, как будто кладёте лопатки в задние карманы. Руки прямые, тело не болтается."
+            },
+            {
+              "exId": "aus",
+              "name": "Австралийские подтягивания",
+              "sets": 3,
+              "target": 6,
+              "unit": "reps",
+              "perSide": false,
+              "how": "Перекладина на уровне пояса, пятки на полу, тело прямое как доска. Тянуть грудь к перекладине, локти назад к рёбрам, наверху пауза 1 сек и свести лопатки, вниз 2 сек. Чем ниже перекладина/дальше ноги — тем тяжелее.",
+              "extra": "пауза наверху"
+            },
+            {
+              "exId": "bench_dip",
+              "name": "Отжимания от скамьи",
+              "sets": 2,
+              "target": 10,
+              "unit": "reps",
+              "perSide": false,
+              "how": "Спина ровная. Количество не растёт, пока не станет «норм»"
+            },
+            {
+              "exId": "squat",
+              "name": "Приседания",
+              "sets": 3,
+              "target": 22,
+              "unit": "reps",
+              "perSide": false,
+              "how": "Колени не выходят за носки, спина ровная"
+            },
+            {
+              "exId": "leg_raise",
+              "name": "Подъём ног лёжа (согнутые)",
+              "sets": 2,
+              "target": 12,
+              "unit": "reps",
+              "perSide": false,
+              "how": "Лёжа на спине, руки вдоль тела, колени согнуты под 90°. Поясница прижата к полу всё время (подложите ладонь — она не должна освобождаться). Поднимать колени к груди, таз чуть отрывается; вниз медленно, 2–3 сек, стопы пола не касаются."
+            },
+            {
+              "exId": "plank",
+              "name": "Планка",
+              "sets": 2,
+              "target": 70,
+              "unit": "sec",
+              "perSide": false,
+              "how": "Линия ровная, плечи над локтями"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "people/olya/blocks/b1/sessions/s1",
+      "data": {
+        "index": 1,
+        "type": "A",
+        "week": 1,
+        "startedAt": null,
+        "closed": true,
+        "entries": {
+          "hang": {
+            "done": [
+              20,
+              20
+            ],
+            "feel": "ok",
+            "at": null,
+            "note": "из таблицы: разжимаются пальцы. Не совсем понятно, что такое \"активно оущены плечи\""
+          },
+          "neg": {
+            "done": [
+              2,
+              2
+            ],
+            "feel": "easy",
+            "at": null,
+            "note": "из таблицы: можно больше"
+          },
+          "pushup": {
+            "done": [
+              8,
+              8
+            ],
+            "feel": "ok",
+            "at": null,
+            "note": "из таблицы: ок"
+          },
+          "lunge": {
+            "done": [
+              8,
+              8
+            ],
+            "feel": "easy",
+            "at": null,
+            "note": "из таблицы: можно больше"
+          },
+          "side_plank": {
+            "done": [
+              35,
+              35
+            ],
+            "feel": "easy",
+            "at": null,
+            "note": "из таблицы: можно больше"
+          }
+        }
+      }
+    },
+    {
+      "path": "people/olya/blocks/b1/sessions/s2",
+      "data": {
+        "index": 2,
+        "type": "B",
+        "week": 1,
+        "startedAt": null,
+        "closed": true,
+        "entries": {
+          "hang": {
+            "done": [
+              30
+            ],
+            "feel": "easy",
+            "at": null,
+            "note": "из таблицы: легко"
+          },
+          "aus": {
+            "done": [
+              6,
+              6,
+              6
+            ],
+            "feel": "ok",
+            "at": null,
+            "note": "из таблицы: не до конца понятна правильная техника"
+          },
+          "bench_dip": {
+            "done": [
+              10,
+              10
+            ],
+            "feel": "hard",
+            "at": null,
+            "note": "из таблицы: тяжело"
+          },
+          "squat": {
+            "done": [
+              20,
+              20,
+              20
+            ],
+            "feel": "ok",
+            "at": null,
+            "note": "В таблице было «болят колени» — по словам Фёдора, ошибка; колени у Оли в порядке"
+          },
+          "leg_raise": {
+            "done": [
+              10,
+              10
+            ],
+            "feel": "ok",
+            "at": null,
+            "note": "из таблицы: ок"
+          },
+          "plank": {
+            "done": [
+              60,
+              60
+            ],
+            "feel": "ok",
+            "at": null,
+            "note": "из таблицы: ок"
+          }
+        }
+      }
+    },
+    {
+      "path": "people/olya/blocks/b1/sessions/s3",
+      "data": {
+        "index": 3,
+        "type": "A",
+        "week": 2,
+        "startedAt": null,
+        "closed": true,
+        "entries": {
+          "hang": {
+            "done": [
+              20,
+              20
+            ],
+            "feel": "ok",
+            "at": null,
+            "note": "из таблицы: разжимаются пальцы. Не совсем понятно, что такое \"активно оущены плечи\""
+          },
+          "neg": {
+            "done": [
+              2,
+              2,
+              2
+            ],
+            "feel": "easy",
+            "at": null,
+            "note": "из таблицы: можно больше"
+          },
+          "pushup": {
+            "done": [
+              8,
+              8
+            ],
+            "feel": "ok",
+            "at": null,
+            "note": "из таблицы: ок"
+          },
+          "lunge": {
+            "done": [
+              8,
+              8
+            ],
+            "feel": "easy",
+            "at": null,
+            "note": "из таблицы: можно больше"
+          },
+          "side_plank": {
+            "done": [
+              45,
+              45
+            ],
+            "feel": "easy",
+            "at": null,
+            "note": "из таблицы: можно больше"
+          }
+        }
+      }
+    },
+    {
+      "path": "people/olya/blocks/b1/sessions/s4",
+      "data": {
+        "index": 4,
+        "type": "B",
+        "week": 2,
+        "startedAt": null,
+        "closed": true,
+        "entries": {
+          "hang": {
+            "done": [
+              30
+            ],
+            "feel": "easy",
+            "at": null,
+            "note": "из таблицы: легко"
+          },
+          "aus": {
+            "done": [
+              6,
+              6,
+              6
+            ],
+            "feel": "ok",
+            "at": null,
+            "note": "из таблицы: не до конца понятна правильная техника"
+          },
+          "bench_dip": {
+            "done": [
+              10,
+              10
+            ],
+            "feel": "hard",
+            "at": null,
+            "note": "из таблицы: тяжело"
+          },
+          "squat": {
+            "done": [
+              20,
+              20,
+              20
+            ],
+            "feel": "ok",
+            "at": null,
+            "note": "В таблице было «болят колени» — по словам Фёдора, ошибка; колени у Оли в порядке"
+          },
+          "leg_raise": {
+            "done": [
+              10,
+              10
+            ],
+            "feel": "ok",
+            "at": null,
+            "note": "из таблицы: ок"
+          },
+          "plank": {
+            "done": [
+              60,
+              60
+            ],
+            "feel": "ok",
+            "at": null,
+            "note": "из таблицы: ок"
+          }
+        }
+      }
+    }
+  ]
+};
+// </inline:seed/seed.json>
+
+document.body.dataset.boot = 'данные программы прочитаны';
+render();
+(async () => {
+  let db = null;
+  try { db = await openDb(); } catch (e) { console.warn(e); }
+  if (!db) { st.noDb = true; render(); return; }
+  st.db = db;
+  document.body.dataset.boot = 'хранилище открыто';
+  // Первый запуск: подложить стартовые данные (блоки 1–2 и история).
+  if (db.isEmpty()) db.importAll(SEED);
+  subscribe();
+  document.body.dataset.boot = 'ожидаю показ программы';
+})();
+
+// Установка на телефон и автоматическое обновление регистрируются до основной программы выше.
+</script>
+</body>
+</html>

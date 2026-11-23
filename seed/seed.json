@@ -1,0 +1,999 @@
+{
+ "docs": [
+  {
+   "path": "people/fedor",
+   "data": {
+    "name": "Фёдор",
+    "activeBlock": "b2"
+   }
+  },
+  {
+   "path": "people/fedor/blocks/b1",
+   "data": {
+    "n": 1,
+    "status": "done",
+    "length": 4,
+    "order": [
+     "A",
+     "B",
+     "A",
+     "B"
+    ],
+    "startedAt": "2026-09-28",
+    "plan": {
+     "A": [
+      {
+       "exId": "hang",
+       "name": "Вис на турнике",
+       "sets": 2,
+       "target": 20,
+       "unit": "sec",
+       "perSide": false,
+       "how": "Плечи активно опущены, не провисать"
+      },
+      {
+       "exId": "neg",
+       "name": "Негативные подтягивания",
+       "sets": 2,
+       "target": 3,
+       "unit": "reps",
+       "perSide": false,
+       "how": "Спуск 3–4 сек, подниматься прыжком/со скамьи. Попытки подтянуться — пока рано"
+      },
+      {
+       "exId": "pushup",
+       "name": "Отжимания от пола",
+       "sets": 2,
+       "target": 10,
+       "unit": "reps",
+       "perSide": false,
+       "how": "Спина прямая, локти под 45°"
+      },
+      {
+       "exId": "lunge",
+       "name": "Выпады вперёд",
+       "sets": 2,
+       "target": 10,
+       "unit": "reps",
+       "perSide": true,
+       "how": "Колено над пяткой, корпус вертикально"
+      },
+      {
+       "exId": "side_plank",
+       "name": "Боковая планка",
+       "sets": 2,
+       "target": 30,
+       "unit": "sec",
+       "perSide": true,
+       "how": "Бёдра вверху; начинать с левой (слабее)"
+      }
+     ],
+     "B": [
+      {
+       "exId": "hang",
+       "name": "Вис на турнике",
+       "sets": 1,
+       "target": 20,
+       "unit": "sec",
+       "perSide": false,
+       "how": "Плечи активно опущены"
+      },
+      {
+       "exId": "aus",
+       "name": "Австралийские подтягивания",
+       "sets": 3,
+       "target": 6,
+       "unit": "reps",
+       "perSide": false,
+       "how": "Тело прямое, лопатки вместе"
+      },
+      {
+       "exId": "bench_dip",
+       "name": "Отжимания от скамьи",
+       "sets": 2,
+       "target": 12,
+       "unit": "reps",
+       "perSide": false,
+       "how": "Корпус ровный, локти вдоль тела"
+      },
+      {
+       "exId": "squat",
+       "name": "Приседания",
+       "sets": 3,
+       "target": 15,
+       "unit": "reps",
+       "perSide": false,
+       "how": "Колени не выходят за носки"
+      },
+      {
+       "exId": "leg_raise",
+       "name": "Подъём ног лёжа (согнутые)",
+       "sets": 2,
+       "target": 10,
+       "unit": "reps",
+       "perSide": false,
+       "how": "Поясница прижата к полу"
+      },
+      {
+       "exId": "plank",
+       "name": "Планка",
+       "sets": 2,
+       "target": 30,
+       "unit": "sec",
+       "perSide": false,
+       "how": "Прямая линия от головы до пят"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "path": "people/fedor/blocks/b2",
+   "data": {
+    "n": 2,
+    "status": "active",
+    "length": 4,
+    "order": [
+     "A",
+     "B",
+     "A",
+     "B"
+    ],
+    "startedAt": "2026-10-26",
+    "plan": {
+     "A": [
+      {
+       "exId": "hang",
+       "name": "Вис на турнике",
+       "sets": 3,
+       "target": 20,
+       "unit": "sec",
+       "perSide": false,
+       "how": "«Плечи опущены» = отвести плечи от ушей, как будто кладёте лопатки в задние карманы. Руки прямые, тело не болтается. Хват: большой палец обхватывает перекладину снизу («в замок»). Пальцы разжимаются — это нормально в начале: висите сколько держат, добирайте время частями."
+      },
+      {
+       "exId": "neg",
+       "name": "Негативные подтягивания",
+       "sets": 3,
+       "target": 3,
+       "unit": "reps",
+       "perSide": false,
+       "how": "Спуск 4–5 сек, подниматься прыжком/со скамьи"
+      },
+      {
+       "exId": "pushup",
+       "name": "Отжимания от пола",
+       "sets": 3,
+       "target": 12,
+       "unit": "reps",
+       "perSide": false,
+       "how": "Спина прямая, локти под 45°"
+      },
+      {
+       "exId": "bridge",
+       "name": "Ягодичный мостик",
+       "sets": 2,
+       "target": 15,
+       "unit": "reps",
+       "perSide": false,
+       "how": "Лёжа на спине, стопы у таза. Поднять таз до прямой линии колени–плечи, наверху сжать ягодицы 2 сек. Колени не болят — если болят, отметить"
+      },
+      {
+       "exId": "side_plank",
+       "name": "Боковая планка",
+       "sets": 2,
+       "target": 40,
+       "unit": "sec",
+       "perSide": true,
+       "how": "Бёдра вверху; начинать с левой (слабее)"
+      }
+     ],
+     "B": [
+      {
+       "exId": "hang",
+       "name": "Вис на турнике",
+       "sets": 2,
+       "target": 20,
+       "unit": "sec",
+       "perSide": false,
+       "how": "«Плечи опущены» = отвести плечи от ушей, как будто кладёте лопатки в задние карманы. Руки прямые, тело не болтается."
+      },
+      {
+       "exId": "aus",
+       "name": "Австралийские подтягивания",
+       "sets": 3,
+       "target": 6,
+       "unit": "reps",
+       "perSide": false,
+       "how": "Перекладина на уровне пояса, пятки на полу, тело прямое как доска. Тянуть грудь к перекладине, локти назад к рёбрам, наверху пауза 1 сек и свести лопатки, вниз 2 сек. Чем ниже перекладина/дальше ноги — тем тяжелее.",
+       "extra": "пауза наверху"
+      },
+      {
+       "exId": "bench_dip",
+       "name": "Отжимания от скамьи",
+       "sets": 3,
+       "target": 15,
+       "unit": "reps",
+       "perSide": false,
+       "how": "Корпус ровный, локти вдоль тела. Стало ещё легко — ноги поставить на стул"
+      },
+      {
+       "exId": "wall_sit",
+       "name": "Стульчик у стены",
+       "sets": 3,
+       "target": 20,
+       "unit": "sec",
+       "perSide": false,
+       "how": "Спина на стене, бёдра ВЫШЕ параллели (неглубоко), колени над пятками. Стоять, а не двигаться. Боль в колене — сразу выйти и отметить"
+      },
+      {
+       "exId": "leg_raise",
+       "name": "Подъём ног лёжа (согнутые)",
+       "sets": 2,
+       "target": 12,
+       "unit": "reps",
+       "perSide": false,
+       "how": "Лёжа на спине, руки вдоль тела, колени согнуты под 90°. Поясница прижата к полу всё время (подложите ладонь — она не должна освобождаться). Поднимать колени к груди, таз чуть отрывается; вниз медленно, 2–3 сек, стопы пола не касаются."
+      },
+      {
+       "exId": "plank",
+       "name": "Планка",
+       "sets": 2,
+       "target": 45,
+       "unit": "sec",
+       "perSide": false,
+       "how": "Прямая линия от головы до пят, живот и ягодицы напряжены"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "path": "people/fedor/blocks/b1/sessions/s1",
+   "data": {
+    "index": 1,
+    "type": "A",
+    "week": 1,
+    "startedAt": null,
+    "closed": true,
+    "entries": {
+     "hang": {
+      "done": [
+       20,
+       20
+      ],
+      "feel": "ok",
+      "at": null,
+      "note": "из таблицы: разжимаются пальцы. Не совсем понятно, что такое \"активно оущены плечи\""
+     },
+     "neg": {
+      "done": [
+       3,
+       3
+      ],
+      "feel": "ok",
+      "at": null,
+      "note": "из таблицы: ок"
+     },
+     "pushup": {
+      "done": [
+       10,
+       10
+      ],
+      "feel": "easy",
+      "at": null,
+      "note": "из таблицы: можно больше"
+     },
+     "lunge": {
+      "done": [
+       10,
+       10
+      ],
+      "feel": "pain",
+      "at": null,
+      "note": "из таблицы: болят колени",
+      "where": "колени"
+     },
+     "side_plank": {
+      "done": [
+       30,
+       30
+      ],
+      "feel": "easy",
+      "at": null,
+      "note": "из таблицы: можно больше"
+     }
+    }
+   }
+  },
+  {
+   "path": "people/fedor/blocks/b1/sessions/s2",
+   "data": {
+    "index": 2,
+    "type": "B",
+    "week": 1,
+    "startedAt": null,
+    "closed": true,
+    "entries": {
+     "hang": {
+      "done": [
+       20
+      ],
+      "feel": "ok",
+      "at": null
+     },
+     "aus": {
+      "done": [
+       6,
+       6,
+       6
+      ],
+      "feel": "ok",
+      "at": null,
+      "note": "из таблицы: не до конца понятна правильная техника"
+     },
+     "bench_dip": {
+      "done": [
+       12,
+       12
+      ],
+      "feel": "easy",
+      "at": null,
+      "note": "из таблицы: очень легко"
+     },
+     "squat": {
+      "done": [
+       15,
+       15,
+       15
+      ],
+      "feel": "pain",
+      "at": null,
+      "note": "из таблицы: болят колени",
+      "where": "колени"
+     },
+     "leg_raise": {
+      "done": [
+       10,
+       10
+      ],
+      "feel": "ok",
+      "at": null,
+      "note": "из таблицы: непонятна правильная техника"
+     },
+     "plank": {
+      "done": [
+       30,
+       30
+      ],
+      "feel": "easy",
+      "at": null,
+      "note": "из таблицы: можно больше"
+     }
+    }
+   }
+  },
+  {
+   "path": "people/fedor/blocks/b1/sessions/s3",
+   "data": {
+    "index": 3,
+    "type": "A",
+    "week": 2,
+    "startedAt": null,
+    "closed": true,
+    "entries": {
+     "hang": {
+      "done": [
+       20,
+       20
+      ],
+      "feel": "ok",
+      "at": null,
+      "note": "из таблицы: разжимаются пальцы. Не совсем понятно, что такое \"активно оущены плечи\""
+     },
+     "neg": {
+      "done": [
+       3,
+       3
+      ],
+      "feel": "ok",
+      "at": null,
+      "note": "из таблицы: ок"
+     },
+     "pushup": {
+      "done": [
+       12,
+       12
+      ],
+      "feel": "easy",
+      "at": null,
+      "note": "из таблицы: можно больше"
+     },
+     "lunge": {
+      "done": [
+       10,
+       10
+      ],
+      "feel": "pain",
+      "at": null,
+      "note": "из таблицы: болят колени",
+      "where": "колени"
+     },
+     "side_plank": {
+      "done": [
+       30,
+       30
+      ],
+      "feel": "easy",
+      "at": null,
+      "note": "из таблицы: можно больше"
+     }
+    }
+   }
+  },
+  {
+   "path": "people/fedor/blocks/b1/sessions/s4",
+   "data": {
+    "index": 4,
+    "type": "B",
+    "week": 2,
+    "startedAt": null,
+    "closed": true,
+    "entries": {
+     "hang": {
+      "done": [
+       20
+      ],
+      "feel": "ok",
+      "at": null
+     },
+     "aus": {
+      "done": [
+       6,
+       6,
+       6
+      ],
+      "feel": "ok",
+      "at": null,
+      "note": "из таблицы: не до конца понятна правильная техника"
+     },
+     "bench_dip": {
+      "done": [
+       12,
+       12
+      ],
+      "feel": "easy",
+      "at": null,
+      "note": "из таблицы: очень легко"
+     },
+     "squat": {
+      "done": [
+       15,
+       15,
+       15
+      ],
+      "feel": "pain",
+      "at": null,
+      "note": "из таблицы: болят колени",
+      "where": "колени"
+     },
+     "leg_raise": {
+      "done": [
+       10,
+       10
+      ],
+      "feel": "ok",
+      "at": null,
+      "note": "из таблицы: непонятна правильная техника"
+     },
+     "plank": {
+      "done": [
+       30,
+       40
+      ],
+      "feel": "easy",
+      "at": null,
+      "note": "из таблицы: можно больше"
+     }
+    }
+   }
+  },
+  {
+   "path": "people/olya",
+   "data": {
+    "name": "Оля",
+    "activeBlock": "b2"
+   }
+  },
+  {
+   "path": "people/olya/blocks/b1",
+   "data": {
+    "n": 1,
+    "status": "done",
+    "length": 4,
+    "order": [
+     "A",
+     "B",
+     "A",
+     "B"
+    ],
+    "startedAt": "2026-09-28",
+    "plan": {
+     "A": [
+      {
+       "exId": "hang",
+       "name": "Вис на турнике",
+       "sets": 2,
+       "target": 20,
+       "unit": "sec",
+       "perSide": false,
+       "how": "Плечи опущены, корпус напряжён"
+      },
+      {
+       "exId": "neg",
+       "name": "Негативные подтягивания",
+       "sets": 2,
+       "target": 2,
+       "unit": "reps",
+       "perSide": false,
+       "how": "Максимально медленный спуск"
+      },
+      {
+       "exId": "pushup",
+       "name": "Отжимания от пола",
+       "sets": 2,
+       "target": 8,
+       "unit": "reps",
+       "perSide": false,
+       "how": "Ладони шире плеч; можно с колен"
+      },
+      {
+       "exId": "lunge",
+       "name": "Выпады",
+       "sets": 2,
+       "target": 8,
+       "unit": "reps",
+       "perSide": true,
+       "how": "Колено строго над пяткой"
+      },
+      {
+       "exId": "side_plank",
+       "name": "Боковая планка",
+       "sets": 2,
+       "target": 35,
+       "unit": "sec",
+       "perSide": true,
+       "how": "Бёдра приподняты, плечо над локтем"
+      }
+     ],
+     "B": [
+      {
+       "exId": "hang",
+       "name": "Вис на турнике",
+       "sets": 1,
+       "target": 20,
+       "unit": "sec",
+       "perSide": false,
+       "how": "Плечи опущены"
+      },
+      {
+       "exId": "aus",
+       "name": "Австралийские подтягивания",
+       "sets": 2,
+       "target": 6,
+       "unit": "reps",
+       "perSide": false,
+       "how": "Прямая линия корпуса, лопатки вместе"
+      },
+      {
+       "exId": "bench_dip",
+       "name": "Отжимания от скамьи",
+       "sets": 2,
+       "target": 10,
+       "unit": "reps",
+       "perSide": false,
+       "how": "Спина ровная"
+      },
+      {
+       "exId": "squat",
+       "name": "Приседания",
+       "sets": 3,
+       "target": 20,
+       "unit": "reps",
+       "perSide": false,
+       "how": "Колени не выходят за носки"
+      },
+      {
+       "exId": "leg_raise",
+       "name": "Подъём ног лёжа (согнутые)",
+       "sets": 2,
+       "target": 10,
+       "unit": "reps",
+       "perSide": false,
+       "how": "Поясница плотно к полу"
+      },
+      {
+       "exId": "plank",
+       "name": "Планка",
+       "sets": 2,
+       "target": 60,
+       "unit": "sec",
+       "perSide": false,
+       "how": "Линия ровная, плечи над локтями"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "path": "people/olya/blocks/b2",
+   "data": {
+    "n": 2,
+    "status": "active",
+    "length": 4,
+    "order": [
+     "A",
+     "B",
+     "A",
+     "B"
+    ],
+    "startedAt": "2026-10-26",
+    "plan": {
+     "A": [
+      {
+       "exId": "hang",
+       "name": "Вис на турнике",
+       "sets": 2,
+       "target": 25,
+       "unit": "sec",
+       "perSide": false,
+       "how": "«Плечи опущены» = отвести плечи от ушей, как будто кладёте лопатки в задние карманы. Руки прямые, тело не болтается. Хват: большой палец обхватывает перекладину снизу («в замок»). Пальцы разжимаются — это нормально в начале: висите сколько держат, добирайте время частями."
+      },
+      {
+       "exId": "neg",
+       "name": "Негативные подтягивания",
+       "sets": 3,
+       "target": 3,
+       "unit": "reps",
+       "perSide": false,
+       "how": "Максимально медленный спуск, 4–5 сек"
+      },
+      {
+       "exId": "pushup",
+       "name": "Отжимания от пола",
+       "sets": 2,
+       "target": 10,
+       "unit": "reps",
+       "perSide": false,
+       "how": "Ладони шире плеч; можно с колен"
+      },
+      {
+       "exId": "lunge",
+       "name": "Выпады",
+       "sets": 2,
+       "target": 10,
+       "unit": "reps",
+       "perSide": true,
+       "how": "Колено строго над пяткой. Не болели — оставляем; заболят — заменить на ягодичный мостик"
+      },
+      {
+       "exId": "side_plank",
+       "name": "Боковая планка",
+       "sets": 2,
+       "target": 45,
+       "unit": "sec",
+       "perSide": true,
+       "how": "Бёдра приподняты, плечо над локтем"
+      }
+     ],
+     "B": [
+      {
+       "exId": "hang",
+       "name": "Вис на турнике",
+       "sets": 2,
+       "target": 30,
+       "unit": "sec",
+       "perSide": false,
+       "how": "«Плечи опущены» = отвести плечи от ушей, как будто кладёте лопатки в задние карманы. Руки прямые, тело не болтается."
+      },
+      {
+       "exId": "aus",
+       "name": "Австралийские подтягивания",
+       "sets": 3,
+       "target": 6,
+       "unit": "reps",
+       "perSide": false,
+       "how": "Перекладина на уровне пояса, пятки на полу, тело прямое как доска. Тянуть грудь к перекладине, локти назад к рёбрам, наверху пауза 1 сек и свести лопатки, вниз 2 сек. Чем ниже перекладина/дальше ноги — тем тяжелее.",
+       "extra": "пауза наверху"
+      },
+      {
+       "exId": "bench_dip",
+       "name": "Отжимания от скамьи",
+       "sets": 2,
+       "target": 10,
+       "unit": "reps",
+       "perSide": false,
+       "how": "Спина ровная. Количество не растёт, пока не станет «норм»"
+      },
+      {
+       "exId": "squat",
+       "name": "Приседания",
+       "sets": 3,
+       "target": 22,
+       "unit": "reps",
+       "perSide": false,
+       "how": "Колени не выходят за носки, спина ровная"
+      },
+      {
+       "exId": "leg_raise",
+       "name": "Подъём ног лёжа (согнутые)",
+       "sets": 2,
+       "target": 12,
+       "unit": "reps",
+       "perSide": false,
+       "how": "Лёжа на спине, руки вдоль тела, колени согнуты под 90°. Поясница прижата к полу всё время (подложите ладонь — она не должна освобождаться). Поднимать колени к груди, таз чуть отрывается; вниз медленно, 2–3 сек, стопы пола не касаются."
+      },
+      {
+       "exId": "plank",
+       "name": "Планка",
+       "sets": 2,
+       "target": 70,
+       "unit": "sec",
+       "perSide": false,
+       "how": "Линия ровная, плечи над локтями"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "path": "people/olya/blocks/b1/sessions/s1",
+   "data": {
+    "index": 1,
+    "type": "A",
+    "week": 1,
+    "startedAt": null,
+    "closed": true,
+    "entries": {
+     "hang": {
+      "done": [
+       20,
+       20
+      ],
+      "feel": "ok",
+      "at": null,
+      "note": "из таблицы: разжимаются пальцы. Не совсем понятно, что такое \"активно оущены плечи\""
+     },
+     "neg": {
+      "done": [
+       2,
+       2
+      ],
+      "feel": "easy",
+      "at": null,
+      "note": "из таблицы: можно больше"
+     },
+     "pushup": {
+      "done": [
+       8,
+       8
+      ],
+      "feel": "ok",
+      "at": null,
+      "note": "из таблицы: ок"
+     },
+     "lunge": {
+      "done": [
+       8,
+       8
+      ],
+      "feel": "easy",
+      "at": null,
+      "note": "из таблицы: можно больше"
+     },
+     "side_plank": {
+      "done": [
+       35,
+       35
+      ],
+      "feel": "easy",
+      "at": null,
+      "note": "из таблицы: можно больше"
+     }
+    }
+   }
+  },
+  {
+   "path": "people/olya/blocks/b1/sessions/s2",
+   "data": {
+    "index": 2,
+    "type": "B",
+    "week": 1,
+    "startedAt": null,
+    "closed": true,
+    "entries": {
+     "hang": {
+      "done": [
+       30
+      ],
+      "feel": "easy",
+      "at": null,
+      "note": "из таблицы: легко"
+     },
+     "aus": {
+      "done": [
+       6,
+       6,
+       6
+      ],
+      "feel": "ok",
+      "at": null,
+      "note": "из таблицы: не до конца понятна правильная техника"
+     },
+     "bench_dip": {
+      "done": [
+       10,
+       10
+      ],
+      "feel": "hard",
+      "at": null,
+      "note": "из таблицы: тяжело"
+     },
+     "squat": {
+      "done": [
+       20,
+       20,
+       20
+      ],
+      "feel": "ok",
+      "at": null,
+      "note": "В таблице было «болят колени» — по словам Фёдора, ошибка; колени у Оли в порядке"
+     },
+     "leg_raise": {
+      "done": [
+       10,
+       10
+      ],
+      "feel": "ok",
+      "at": null,
+      "note": "из таблицы: ок"
+     },
+     "plank": {
+      "done": [
+       60,
+       60
+      ],
+      "feel": "ok",
+      "at": null,
+      "note": "из таблицы: ок"
+     }
+    }
+   }
+  },
+  {
+   "path": "people/olya/blocks/b1/sessions/s3",
+   "data": {
+    "index": 3,
+    "type": "A",
+    "week": 2,
+    "startedAt": null,
+    "closed": true,
+    "entries": {
+     "hang": {
+      "done": [
+       20,
+       20
+      ],
+      "feel": "ok",
+      "at": null,
+      "note": "из таблицы: разжимаются пальцы. Не совсем понятно, что такое \"активно оущены плечи\""
+     },
+     "neg": {
+      "done": [
+       2,
+       2,
+       2
+      ],
+      "feel": "easy",
+      "at": null,
+      "note": "из таблицы: можно больше"
+     },
+     "pushup": {
+      "done": [
+       8,
+       8
+      ],
+      "feel": "ok",
+      "at": null,
+      "note": "из таблицы: ок"
+     },
+     "lunge": {
+      "done": [
+       8,
+       8
+      ],
+      "feel": "easy",
+      "at": null,
+      "note": "из таблицы: можно больше"
+     },
+     "side_plank": {
+      "done": [
+       45,
+       45
+      ],
+      "feel": "easy",
+      "at": null,
+      "note": "из таблицы: можно больше"
+     }
+    }
+   }
+  },
+  {
+   "path": "people/olya/blocks/b1/sessions/s4",
+   "data": {
+    "index": 4,
+    "type": "B",
+    "week": 2,
+    "startedAt": null,
+    "closed": true,
+    "entries": {
+     "hang": {
+      "done": [
+       30
+      ],
+      "feel": "easy",
+      "at": null,
+      "note": "из таблицы: легко"
+     },
+     "aus": {
+      "done": [
+       6,
+       6,
+       6
+      ],
+      "feel": "ok",
+      "at": null,
+      "note": "из таблицы: не до конца понятна правильная техника"
+     },
+     "bench_dip": {
+      "done": [
+       10,
+       10
+      ],
+      "feel": "hard",
+      "at": null,
+      "note": "из таблицы: тяжело"
+     },
+     "squat": {
+      "done": [
+       20,
+       20,
+       20
+      ],
+      "feel": "ok",
+      "at": null,
+      "note": "В таблице было «болят колени» — по словам Фёдора, ошибка; колени у Оли в порядке"
+     },
+     "leg_raise": {
+      "done": [
+       10,
+       10
+      ],
+      "feel": "ok",
+      "at": null,
+      "note": "из таблицы: ок"
+     },
+     "plank": {
+      "done": [
+       60,
+       60
+      ],
+      "feel": "ok",
+      "at": null,
+      "note": "из таблицы: ок"
+     }
+    }
+   }
+  }
+ ]
+}
