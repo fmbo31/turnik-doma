@@ -120,6 +120,7 @@ select { font: 500 17px var(--body); padding: 10px 12px; border: 1px solid var(-
     <button type="button" id="export-btn">Сохранить копию</button>
     <button type="button" id="import-btn">Загрузить копию</button>
     <input type="file" id="import-file" accept="application/json,.json" hidden>
+    <div class="hint" id="sync-status" role="status"></div>
     <div class="hint" id="backup-hint"></div>
   </div>
 </div>
@@ -445,6 +446,117 @@ function planNextBlock({ block, sessions, history = [], length = block.length, c
 }
 // </inline:planner.js>
 
+// <inline:sync-config.js>
+// Публичный ключ: доступ к строкам ограничен правилами базы. Секретные ключи сюда не добавлять.
+const SYNC_CONFIG = {
+  url: 'https://mecurjodhtxjwtpavrcv.supabase.co',
+  key: 'sb_publishable_d2ulxUCPqhykqdhpW5wRhw_5pOA06Vk',
+};
+// </inline:sync-config.js>
+
+// <inline:sync.js>
+const SESSION_KEY = 'workout.sync.session';
+const PENDING_KEY = 'workout.sync.pending';
+const REPLACE_KEY = 'workout.sync.replace';
+const INITIALIZED_KEY = 'workout.sync.initialized';
+
+function createSync({ url, key, storage, fetchImpl = globalThis.fetch.bind(globalThis), now = () => Date.now() }) {
+  const read = (name, fallback) => {
+    try { return JSON.parse(storage.getItem(name) || 'null') ?? fallback; } catch { return fallback; }
+  };
+  const write = (name, value) => storage.setItem(name, JSON.stringify(value));
+  let session = read(SESSION_KEY, null);
+  let pending = new Set(read(PENDING_KEY, []));
+  let replace = read(REPLACE_KEY, false);
+
+  async function request(path, { method = 'GET', body, headers = {}, auth = true, activeSession = null } = {}) {
+    const token = auth ? (activeSession || await getSession()).access_token : null;
+    const response = await fetchImpl(url + path, {
+      method,
+      headers: {
+        apikey: key,
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...headers,
+      },
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    });
+    const text = await response.text();
+    if (!response.ok) throw new Error(`Supabase ${response.status}: ${text.slice(0, 300)}`);
+    return text ? JSON.parse(text) : null;
+  }
+
+  function saveSession(value) {
+    session = { ...value, expires_at: value.expires_at || Math.floor(now() / 1000) + (value.expires_in || 3600) };
+    write(SESSION_KEY, session);
+    return session;
+  }
+
+  async function getSession() {
+    if (session?.access_token && session.expires_at * 1000 > now() + 60000) return session;
+    if (session?.refresh_token) {
+      const refreshed = await request('/auth/v1/token?grant_type=refresh_token', {
+        method: 'POST', body: { refresh_token: session.refresh_token }, auth: false,
+      });
+      return saveSession({ ...session, ...refreshed });
+    }
+    const created = await request('/auth/v1/signup', { method: 'POST', body: {}, auth: false });
+    if (!created.access_token || !created.refresh_token || !created.user?.id) throw new Error('Supabase не создал учётную запись');
+    return saveSession(created);
+  }
+
+  const downloadDocs = activeSession => request('/rest/v1/workout_documents?select=path,data', { activeSession })
+    .then(rows => rows.map(row => ({ path: row.path, data: row.data })));
+
+  async function uploadDocs(docs, activeSession) {
+    if (!docs.length) return;
+    const updatedAt = new Date(now()).toISOString();
+    await request('/rest/v1/workout_documents?on_conflict=user_id,path', {
+      method: 'POST',
+      activeSession,
+      headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+      body: docs.map(d => ({ user_id: activeSession.user.id, path: d.path, data: d.data, updated_at: updatedAt })),
+    });
+  }
+
+  async function deleteMissing(before, docs, activeSession) {
+    const keep = new Set(docs.map(d => d.path));
+    const missing = before.map(d => d.path).filter(path => !keep.has(path));
+    if (!missing.length) return;
+    const filter = docs.length ? `?path=in.(${missing.map(path => `"${path.replace(/"/g, '\\"')}"`).join(',')})` : '';
+    await request('/rest/v1/workout_documents' + encodeURI(filter), { method: 'DELETE', activeSession });
+  }
+
+  return {
+    markPending(paths) {
+      for (const path of paths) pending.add(path);
+      write(PENDING_KEY, [...pending]);
+    },
+    markReplace() {
+      replace = true;
+      write(REPLACE_KEY, true);
+    },
+    async sync(localDocs) {
+      const activeSession = await getSession();
+      const initialized = read(INITIALIZED_KEY, false);
+      const before = replace || !initialized ? await downloadDocs(activeSession) : null;
+      if (replace) {
+        await deleteMissing(before, localDocs, activeSession);
+        await uploadDocs(localDocs, activeSession);
+      } else if (!initialized && before.length === 0) {
+        await uploadDocs(localDocs, activeSession);
+      } else if (pending.size) {
+        await uploadDocs(localDocs.filter(d => pending.has(d.path)), activeSession);
+      }
+      const remoteDocs = await downloadDocs(activeSession);
+      pending.clear(); replace = false;
+      write(PENDING_KEY, []); write(REPLACE_KEY, false); write(INITIALIZED_KEY, true);
+      return remoteDocs;
+    },
+  };
+}
+// </inline:sync.js>
+
 // <inline:store.js>
 // Хранилище на localStorage: замена документной базе артефакта claude.ai.
 // Тот же минимальный интерфейс, который использует страница:
@@ -458,7 +570,7 @@ const LS_KEY = 'workout.db.v1';
 
 const clone = v => (v === undefined ? undefined : JSON.parse(JSON.stringify(v)));
 
-function createDb(storage) {
+function createDb(storage, { onChange = () => {}, onReplace = () => {} } = {}) {
   let state = {};
   try { state = JSON.parse(storage.getItem(LS_KEY) || '{}') || {}; } catch { state = {}; }
 
@@ -484,6 +596,13 @@ function createDb(storage) {
   }
   const notifyAll = () => { for (const l of [...listeners]) emit(l); };
 
+  function replaceState(docs) {
+    const next = {};
+    for (const d of docs) next[d.path] = clone(d.data);
+    state = next;
+    persist();
+  }
+
   function subscribe(kind, path, cb, errCb) {
     const l = { kind, path, cb, errCb };
     listeners.add(l);
@@ -502,12 +621,12 @@ function createDb(storage) {
             return Promise.reject(e);
           }
           state[path] = { ...state[path], ...clone(patch) };
-          persist(); notifyAll();
+          persist(); onChange([path]); notifyAll();
           return Promise.resolve();
         },
         set(data) {
           state[path] = clone(data);
-          persist(); notifyAll();
+          persist(); onChange([path]); notifyAll();
           return Promise.resolve();
         },
       };
@@ -536,10 +655,14 @@ function createDb(storage) {
     },
     importAll(json) {
       api.validateImport(json);
-      const next = {};
-      for (const d of json.docs) next[d.path] = clone(d.data);
-      state = next;
-      persist(); notifyAll();
+      replaceState(json.docs);
+      onReplace(); notifyAll();
+      return Object.keys(state).length;
+    },
+    replaceAll(docs) {
+      api.validateImport({ docs });
+      replaceState(docs);
+      notifyAll();
       return Object.keys(state).length;
     },
     // Подхват изменений, внесённых другой вкладкой этого же браузера.
@@ -551,11 +674,11 @@ function createDb(storage) {
   return api;
 }
 
-function openDb() {
+function openDb(hooks) {
   let storage = null;
   try { storage = globalThis.localStorage; } catch { storage = null; }
   if (!storage) return Promise.resolve(null);
-  const db = createDb(storage);
+  const db = createDb(storage, hooks);
   try {
     globalThis.addEventListener?.('storage', e => { if (e.key === LS_KEY) db.reload(); });
   } catch { /* старые браузеры — просто без синхронизации вкладок */ }
@@ -574,8 +697,34 @@ try { const p = localStorage.getItem('workout.person'); if (p === 'fedor' || p =
 
 const st = { db: null, noDb: false, personDoc: null, blockId: null, block: null, sessions: [], loaded: false,
   openEx: null, drafts: {}, draftsKey: null, prevHist: [], prevFor: null, saving: false, error: null, justClosed: null, timer: null,
-  planOptions: null, plannerHistory: [], plannerHistoryFor: null, plannerLoading: false, plannerError: null };
+  planOptions: null, plannerHistory: [], plannerHistoryFor: null, plannerLoading: false, plannerError: null,
+  sync: null, syncRunning: false, syncQueued: false };
 let unsubs = [], blockUnsubs = [];
+let syncTimer = null;
+
+function setSyncStatus(text) { const el = $('sync-status'); if (el) el.textContent = text; }
+function scheduleSync() {
+  if (!st.sync) return;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(runSync, 600);
+}
+async function runSync() {
+  if (!st.db || !st.sync) return;
+  if (st.syncRunning) { st.syncQueued = true; return; }
+  st.syncRunning = true;
+  setSyncStatus('Облако: синхронизация…');
+  try {
+    const docs = await st.sync.sync(st.db.exportAll().docs);
+    st.db.replaceAll(docs);
+    setSyncStatus('Облако: записи сохранены · ' + new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }));
+  } catch (e) {
+    console.warn('sync:', e);
+    setSyncStatus('Облако недоступно — записи сохранены на телефоне');
+  } finally {
+    st.syncRunning = false;
+    if (st.syncQueued) { st.syncQueued = false; scheduleSync(); }
+  }
+}
 
 function stopAll(list) { list.forEach(u => { try { u(); } catch {} }); list.length = 0; }
 
@@ -2035,15 +2184,30 @@ const SEED = {
 document.body.dataset.boot = 'данные программы прочитаны';
 render();
 (async () => {
+  const syncEnabled = new URLSearchParams(location.search).get('sync') !== 'off';
+  if (syncEnabled) {
+    try { st.sync = createSync({ ...SYNC_CONFIG, storage: localStorage }); }
+    catch (e) { console.warn('sync:', e); }
+  }
   let db = null;
-  try { db = await openDb(); } catch (e) { console.warn(e); }
+  try {
+    db = await openDb({
+      onChange(paths) { st.sync?.markPending(paths); scheduleSync(); },
+      onReplace() { st.sync?.markReplace(); scheduleSync(); },
+    });
+  } catch (e) { console.warn(e); }
   if (!db) { st.noDb = true; render(); return; }
   st.db = db;
   document.body.dataset.boot = 'хранилище открыто';
-  // Первый запуск: подложить стартовые данные (блоки 1–2 и история).
-  if (db.isEmpty()) db.importAll(SEED);
+  // Первый запуск: подложить стартовые данные, не перезаписывая возможную облачную историю.
+  if (db.isEmpty()) db.replaceAll(SEED.docs);
   subscribe();
   document.body.dataset.boot = 'ожидаю показ программы';
+  if (st.sync) {
+    runSync();
+    window.addEventListener('online', runSync);
+    setInterval(() => { if (!document.hidden) runSync(); }, 30000);
+  }
 })();
 
 // Установка на телефон и автоматическое обновление регистрируются до основной программы выше.

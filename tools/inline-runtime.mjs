@@ -16,7 +16,7 @@ function inline(html, name, source) {
 
 const original = read('index.html');
 let html = original;
-for (const name of ['logic.js', 'planner.js', 'store.js']) {
+for (const name of ['logic.js', 'planner.js', 'sync-config.js', 'sync.js', 'store.js']) {
   html = inline(html, name, read(name).replace(/^export /gm, ''));
 }
 const seed = JSON.stringify(JSON.parse(read('seed/seed.json')), null, 2).replace(/</g, '\\u003c');

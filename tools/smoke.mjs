@@ -22,7 +22,7 @@ const errors = [];
 page.on('pageerror', e => errors.push('pageerror: ' + e.message));
 page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
 
-await page.goto(base + '/index.html', { waitUntil: 'commit' });
+await page.goto(base + '/index.html?sync=off', { waitUntil: 'commit' });
 await page.waitForSelector('.ex.open', { timeout: 30000 });
 
 // 1. Стартовые данные подложились, тренировка на экране

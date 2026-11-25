@@ -10,7 +10,7 @@ const LS_KEY = 'workout.db.v1';
 
 const clone = v => (v === undefined ? undefined : JSON.parse(JSON.stringify(v)));
 
-export function createDb(storage) {
+export function createDb(storage, { onChange = () => {}, onReplace = () => {} } = {}) {
   let state = {};
   try { state = JSON.parse(storage.getItem(LS_KEY) || '{}') || {}; } catch { state = {}; }
 
@@ -36,6 +36,13 @@ export function createDb(storage) {
   }
   const notifyAll = () => { for (const l of [...listeners]) emit(l); };
 
+  function replaceState(docs) {
+    const next = {};
+    for (const d of docs) next[d.path] = clone(d.data);
+    state = next;
+    persist();
+  }
+
   function subscribe(kind, path, cb, errCb) {
     const l = { kind, path, cb, errCb };
     listeners.add(l);
@@ -54,12 +61,12 @@ export function createDb(storage) {
             return Promise.reject(e);
           }
           state[path] = { ...state[path], ...clone(patch) };
-          persist(); notifyAll();
+          persist(); onChange([path]); notifyAll();
           return Promise.resolve();
         },
         set(data) {
           state[path] = clone(data);
-          persist(); notifyAll();
+          persist(); onChange([path]); notifyAll();
           return Promise.resolve();
         },
       };
@@ -88,10 +95,14 @@ export function createDb(storage) {
     },
     importAll(json) {
       api.validateImport(json);
-      const next = {};
-      for (const d of json.docs) next[d.path] = clone(d.data);
-      state = next;
-      persist(); notifyAll();
+      replaceState(json.docs);
+      onReplace(); notifyAll();
+      return Object.keys(state).length;
+    },
+    replaceAll(docs) {
+      api.validateImport({ docs });
+      replaceState(docs);
+      notifyAll();
       return Object.keys(state).length;
     },
     // Подхват изменений, внесённых другой вкладкой этого же браузера.
@@ -103,11 +114,11 @@ export function createDb(storage) {
   return api;
 }
 
-export function openDb() {
+export function openDb(hooks) {
   let storage = null;
   try { storage = globalThis.localStorage; } catch { storage = null; }
   if (!storage) return Promise.resolve(null);
-  const db = createDb(storage);
+  const db = createDb(storage, hooks);
   try {
     globalThis.addEventListener?.('storage', e => { if (e.key === LS_KEY) db.reload(); });
   } catch { /* старые браузеры — просто без синхронизации вкладок */ }
