@@ -7,6 +7,7 @@ import sys
 import urllib.error
 import urllib.request
 from ctypes import wintypes
+from datetime import datetime, timezone
 
 PROJECT_REF = 'mecurjodhtxjwtpavrcv'
 BASE_URL = f'https://{PROJECT_REF}.supabase.co'
@@ -69,17 +70,20 @@ def configure():
     print('Секретный ключ сохранён в связке ключей Windows.')
 
 
-def api_request(path, method='GET', body=None):
+def api_request(path, method='GET', body=None, prefer=None):
     secret = get_secret()
+    headers = {
+        'apikey': secret,
+        'Authorization': f'Bearer {secret}',
+        'Content-Type': 'application/json',
+    }
+    if prefer:
+        headers['Prefer'] = prefer
     request = urllib.request.Request(
         BASE_URL + path,
         method=method,
         data=json.dumps(body).encode('utf-8') if body is not None else None,
-        headers={
-            'apikey': secret,
-            'Authorization': f'Bearer {secret}',
-            'Content-Type': 'application/json',
-        },
+        headers=headers,
     )
     try:
         with urllib.request.urlopen(request, timeout=30) as response:
@@ -101,13 +105,28 @@ def main():
             json.dump({'docs': rows}, output, ensure_ascii=False, indent=2)
         print(f'Документов: {len(rows)}; учётных записей: {len(set(row["user_id"] for row in rows))}. Файл: {sys.argv[2]}')
         return
+    if command == 'upsert' and len(sys.argv) == 3:
+        with open(sys.argv[2], encoding='utf-8') as source:
+            docs = json.load(source)['docs']
+        updated_at = datetime.now(timezone.utc).isoformat()
+        rows = []
+        for doc in docs:
+            if not doc.get('user_id') or not doc.get('path', '').startswith('people/') or not isinstance(doc.get('data'), dict):
+                raise ValueError('Некорректный документ для облака')
+            rows.append({'user_id': doc['user_id'], 'path': doc['path'], 'data': doc['data'], 'updated_at': updated_at})
+        api_request(
+            '/rest/v1/workout_documents?on_conflict=user_id,path', method='POST', body=rows,
+            prefer='resolution=merge-duplicates,return=minimal',
+        )
+        print(f'Обновлено документов: {len(rows)}.')
+        return
     if command == 'cleanup-user' and len(sys.argv) == 3:
         user_id = sys.argv[2]
         api_request(f'/rest/v1/workout_documents?user_id=eq.{user_id}', method='DELETE')
         api_request(f'/auth/v1/admin/users/{user_id}', method='DELETE')
         print('Тестовая учётная запись и её документы удалены.')
         return
-    raise SystemExit('Команды: configure | export <файл> | cleanup-user <user_id>')
+    raise SystemExit('Команды: configure | export <файл> | upsert <файл> | cleanup-user <user_id>')
 
 
 if __name__ == '__main__':
