@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from 'node:child_process';
-import { cpSync, mkdtempSync, rmSync } from 'node:fs';
+import { cpSync, mkdtempSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -12,9 +12,12 @@ const run = (command, args) => execFileSync(command, args, { stdio: 'inherit' })
 try {
   run('git', ['clone', 'https://github.com/fmbo31/turnik-doma.git', repo]);
   run('git', ['-C', repo, 'checkout', '-B', 'main']);
+  for (const entry of readdirSync(repo, { withFileTypes: true })) {
+    if (entry.name !== '.git') rmSync(join(repo, entry.name), { recursive: true, force: true });
+  }
   cpSync(source, repo, {
     recursive: true,
-    filter: path => !path.split(/[\\/]/).includes('node_modules'),
+    filter: path => !path.split(/[\\/]/).some(part => ['node_modules', '__pycache__'].includes(part)) && !path.endsWith('.pyc'),
   });
   run('git', ['-C', repo, 'add', '-A']);
   const diff = spawnSync('git', ['-C', repo, 'diff', '--cached', '--quiet'], { stdio: 'inherit' });
