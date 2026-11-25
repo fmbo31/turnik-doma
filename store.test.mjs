@@ -47,6 +47,19 @@ test('data() отдаёт копию: правки снапшота хранил
   assert.equal(again.data().name, 'Фёдор');
 });
 
+test('update объединяет записи упражнений вместо замены всего набора', async () => {
+  const db = createDb(fakeStorage());
+  const path = 'people/fedor/blocks/b2/sessions/s1';
+  const hang = { done: [20, 20, 20], feel: 'easy' };
+  const neg = { done: [4, 4, 4], feel: 'ok' };
+  await db.doc(path).set({ index: 1, closed: false, entries: { hang } });
+  await db.doc(path).update({ entries: { neg }, closed: true });
+  const snap = await new Promise(resolve => db.doc(path).onSnapshot(resolve));
+  assert.deepEqual(snap.data(), { index: 1, closed: true, entries: { hang, neg } });
+  const exported = db.exportAll().docs.find(d => d.path === path);
+  assert.deepEqual(exported.data.entries, { hang, neg });
+});
+
 test('update без документа отклоняется с кодом invalid_argument', async () => {
   const db = createDb(fakeStorage());
   const e = await db.doc('people/fedor').update({ a: 1 }).then(() => null, err => err);

@@ -60,7 +60,9 @@ export function createDb(storage, { onChange = () => {}, onReplace = () => {} } 
             e.code = 'invalid_argument';
             return Promise.reject(e);
           }
-          state[path] = { ...state[path], ...clone(patch) };
+          const next = clone(patch);
+          if (patch.entries && state[path].entries) next.entries = { ...state[path].entries, ...clone(patch.entries) };
+          state[path] = { ...state[path], ...next };
           persist(); onChange([path]); notifyAll();
           return Promise.resolve();
         },

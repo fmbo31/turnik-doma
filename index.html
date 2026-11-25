@@ -620,7 +620,9 @@ function createDb(storage, { onChange = () => {}, onReplace = () => {} } = {}) {
             e.code = 'invalid_argument';
             return Promise.reject(e);
           }
-          state[path] = { ...state[path], ...clone(patch) };
+          const next = clone(patch);
+          if (patch.entries && state[path].entries) next.entries = { ...state[path].entries, ...clone(patch.entries) };
+          state[path] = { ...state[path], ...next };
           persist(); onChange([path]); notifyAll();
           return Promise.resolve();
         },
@@ -689,8 +691,14 @@ function openDb(hooks) {
 const FEEL_LABEL = Object.fromEntries(FEELS);
 const TYPE_LABEL = { A: 'А', B: 'Б' };
 const BACKUP_AT_KEY = 'workout.backupAt';
+const DRAFTS_KEY = 'workout.drafts.v1';
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+function loadDraftSessions() {
+  try { const value = JSON.parse(localStorage.getItem(DRAFTS_KEY) || '{}'); return value && typeof value === 'object' && !Array.isArray(value) ? value : {}; }
+  catch { return {}; }
+}
 
 let person = 'fedor';
 try { const p = localStorage.getItem('workout.person'); if (p === 'fedor' || p === 'olya') person = p; } catch {}
@@ -698,7 +706,7 @@ try { const p = localStorage.getItem('workout.person'); if (p === 'fedor' || p =
 const st = { db: null, noDb: false, personDoc: null, blockId: null, block: null, sessions: [], loaded: false,
   openEx: null, drafts: {}, draftsKey: null, prevHist: [], prevFor: null, saving: false, error: null, justClosed: null, timer: null,
   planOptions: null, plannerHistory: [], plannerHistoryFor: null, plannerLoading: false, plannerError: null,
-  sync: null, syncRunning: false, syncQueued: false };
+  sync: null, syncRunning: false, syncQueued: false, draftSessions: loadDraftSessions() };
 let unsubs = [], blockUnsubs = [];
 let syncTimer = null;
 
@@ -728,9 +736,27 @@ async function runSync() {
 
 function stopAll(list) { list.forEach(u => { try { u(); } catch {} }); list.length = 0; }
 
+function persistDraftSession() {
+  if (!st.draftsKey) return;
+  if (!Object.keys(st.drafts).length && !st.openEx) delete st.draftSessions[st.draftsKey];
+  else st.draftSessions[st.draftsKey] = { openEx: st.openEx ?? null, items: st.drafts };
+  try { localStorage.setItem(DRAFTS_KEY, JSON.stringify(st.draftSessions)); } catch {}
+}
+function restoreDraftSession(key) {
+  persistDraftSession();
+  const saved = st.draftSessions[key];
+  st.drafts = saved?.items || {};
+  st.openEx = saved?.openEx ?? null;
+  st.draftsKey = key;
+}
+function clearDraftSessions() {
+  st.draftSessions = {}; st.drafts = {}; st.draftsKey = null; st.openEx = null;
+  try { localStorage.removeItem(DRAFTS_KEY); } catch {}
+}
+
 function subscribe() {
   stopAll(unsubs); stopAll(blockUnsubs);
-  Object.assign(st, { personDoc: null, blockId: null, block: null, sessions: [], loaded: false, openEx: null, drafts: {}, error: null, justClosed: null, timer: null,
+  Object.assign(st, { personDoc: null, blockId: null, block: null, sessions: [], loaded: false, error: null, justClosed: null, timer: null,
     planOptions: null, plannerHistory: [], plannerHistoryFor: null, plannerLoading: false, plannerError: null });
   render();
   unsubs.push(st.db.doc(`people/${person}`).onSnapshot(snap => {
@@ -859,9 +885,9 @@ function render() {
   head.innerHTML = `<h1>Тренировка ${TYPE_LABEL[cur.type]}</h1>
     <div class="sub">Блок ${esc(st.block.n)} · тренировка ${cur.index} из ${esc(st.block.length)}</div><div class="dots">${dots}</div>`;
 
-  // Черновики живут в пределах одной тренировки: у А и Б есть общие упражнения.
+  // У каждого человека и каждой тренировки свой независимый черновик.
   const key = `${person}/${st.blockId}/${cur.index}`;
-  if (st.draftsKey !== key) { st.drafts = {}; st.draftsKey = key; }
+  if (st.draftsKey !== key) restoreDraftSession(key);
   const plan = st.block.plan[cur.type] || [];
   const sess = sessionDoc(cur.index);
   const entries = sess?.entries || {};
@@ -1000,6 +1026,7 @@ function stopTimer(keepResult) {
   if (keepResult && d && sec > 0) {
     d.text = ((($('done-' + t.exId)?.value) ?? d.text).trim() + ' ' + sec).trim();
   }
+  persistDraftSession();
   render();
 }
 
@@ -1042,7 +1069,7 @@ async function save(exId) {
       try { await ref.update(w.patch); }
       catch (e) { if (e?.code !== 'invalid_argument') throw e; await ref.set(w.data); }
     } else await ref.update(w.data);
-    if (person === ctx.person) { delete st.drafts[exId]; st.openEx = null; }
+    if (person === ctx.person) { delete st.drafts[exId]; st.openEx = null; persistDraftSession(); }
   } catch (e) {
     console.warn(e);
     if (person === ctx.person) { st.justClosed = wasClosed; d.error = 'Не сохранилось. Нажми «Записать» ещё раз.'; }
@@ -1113,7 +1140,7 @@ $('import-file').addEventListener('change', async e => {
   try { n = st.db.validateImport(data); }
   catch (err) { alert('Этот файл не похож на копию данных тренировок. ' + err.message); return; }
   if (!confirm(`Заменить все текущие записи данными из копии (${n} документов)?\n\nЕсли в копии старые записи, свежие на телефоне пропадут.`)) return;
-  try { st.db.importAll(data); }
+  try { clearDraftSessions(); st.db.importAll(data); }
   catch (err) { alert('Не получилось загрузить копию: ' + err.message); }
 });
 
@@ -1121,7 +1148,7 @@ document.addEventListener('click', e => {
   const pb = e.target.closest('.people button');
   if (pb) {
     if (pb.dataset.person !== person && !st.saving) {
-      if (st.timer) stopTimer(false);
+      if (st.timer) stopTimer(true);
       person = pb.dataset.person;
       try { localStorage.setItem('workout.person', person); } catch {}
       if (st.db) subscribe(); else render();
@@ -1136,7 +1163,7 @@ document.addEventListener('click', e => {
     else { const cur = shownSession(); const ex = st.block.plan[cur.type].find(x => x.exId === exId); if (ex) startTimer(ex); }
     return;
   }
-  if (e.target.closest('#next-btn')) { st.justClosed = null; st.openEx = null; st.drafts = {}; render(); return; }
+  if (e.target.closest('#next-btn')) { st.justClosed = null; st.openEx = null; persistDraftSession(); render(); return; }
   const t = e.target.closest('[data-toggle]');
   if (t) {
     const id = t.dataset.toggle;
@@ -1146,6 +1173,7 @@ document.addEventListener('click', e => {
     const openNow = st.openEx ?? firstOpen;
     if (st.timer) stopTimer(true);
     st.openEx = openNow === id ? '' : id;
+    persistDraftSession();
     render(); return;
   }
   const fb = e.target.closest('.feels button');
@@ -1153,6 +1181,7 @@ document.addEventListener('click', e => {
     const exId = fb.closest('[data-ex]').dataset.ex;
     st.drafts[exId].feel = fb.dataset.feel;
     st.drafts[exId].text = $('done-' + exId)?.value ?? st.drafts[exId].text;
+    persistDraftSession();
     render(); return;
   }
   const sb = e.target.closest('.save[id^="save-"]');
@@ -1168,6 +1197,7 @@ document.addEventListener('input', e => {
   const m = e.target.id && e.target.id.match(/^(done|where)-(.+)$/);
   if (!m || !st.drafts[m[2]]) return;
   st.drafts[m[2]][m[1] === 'done' ? 'text' : 'where'] = e.target.value;
+  persistDraftSession();
 });
 
 document.addEventListener('change', e => {
